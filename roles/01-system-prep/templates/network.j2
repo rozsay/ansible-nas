@@ -1,0 +1,15 @@
+[Match]
+Name={{ zfsprep_netplan_interface }}
+
+[Network]
+DHCP=ipv4
+
+network: 
+  renderer: 
+    networkd 
+  ethernets: {{ zfsprep_netplan_interface }}: 
+    addresses: - {{ zfsprep_netplan_address }}/24 
+    gateway4: {{ zfsprep_netplan_gw }}
+    nameservers: 
+      addresses: - {{ zfsprep_netplan_ns }}
+  version: 2
