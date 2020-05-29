@@ -16,6 +16,7 @@ zfsprep_data_pool: bulk
 zfsprep_root_pool_type: ""
 zfsprep_data_pool_type: ""
 zfsprep_legacy_device_nodes: false
+zfsprep_installdir: /mnt/install/
 zfsprep_root_disks:
   - sda
 #debug:
@@ -63,7 +64,11 @@ zfsprep_root_pool_opts:
   - "-O normalization=formD"
   - "-O acltype=posixacl"
   - "-O dnodesize=auto"
-  - "-O xattr=sa -O mountpoint=none -R /mnt"
+  - "-O encryption=aes-256-gcm"
+  - "-O keylocation=prompt"
+  - "-O keyformat=passphrase"
+  - "-O xattr=sa"
+  - "-O mountpoint=none -R {{ zfsprep_installdir }}"
 zfsprep_data_pool_opts:
   - "-o ashift=12"
   - "-O atime=off"
@@ -72,7 +77,7 @@ zfsprep_data_pool_opts:
   - "-O normalization=formD"
   - "-O acltype=posixacl"
   - "-O dnodesize=auto"
-  - "-O xattr=sa -O mountpoint=/data -R /mnt"
+  - "-O xattr=sa -O mountpoint=/data -R {{ zfsprep_installdir }}"
 zfsprep_root_volumes:
   - name: "{{ zfsprep_root_pool }}/home"
     properties:

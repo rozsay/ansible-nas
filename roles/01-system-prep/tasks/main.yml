@@ -81,27 +81,24 @@
 #  with_items:
 #    - "{{ zfsprep_data_device_list }}"
 #  when: zfsprep_data_partitions | default(false) | bool == true
-#- name: set up crypt devices
-#  shell: "echo -n {{ zfsprep_crypt_passphrase }} | zpool create {{ zfsprep_root_pool_opts | join(' ') }} {{ zfsprep_root_pool }} {{ zfsprep_root_pool_type }} {{ (zfsprep_luks | default(false) | bool == true) | ternary(zfsprep_luks_root_names | map('regex_replace', '(.*)', '/dev/mapper/\\g<1>') | list, zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_root_part_append) | list) | join(' ') }}"
-#  when: zfsprep_crypt | default(false) | bool == true
-- name: create root zpool
-  shell: "zpool create {{ zfsprep_root_pool_opts | join(' ') }} {{ zfsprep_root_pool }} {{ zfsprep_root_pool_type }} {{ (zfsprep_luks | default(false) | bool == true) | ternary(zfsprep_luks_root_names | map('regex_replace', '(.*)', '/dev/mapper/\\g<1>') | list, zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_root_part_append) | list) | join(' ') }}"
-  when: zfsprep_crypt | default(false) | bool == false
+- name: set up crypt devices
+  shell: "echo -n {{ zfsprep_crypt_passphrase }} | zpool create {{ zfsprep_root_pool_opts | join(' ') }} {{ zfsprep_root_pool }} {{ zfsprep_root_pool_type }} {{ zfsprep_root_device_list }}{{ zfsprep_root_part_append }} -f"
+  when: zfsprep_crypt | default(false) | bool == true
 - name: create root dataset
   zfs:
     name: "{{ zfsprep_root_pool }}/ROOT"
     state: present
     extra_zfs_properties:
+      canmount: off
+      mountpoint: none
+- name: create root fs
+  zfs:
+    name: "{{ zfsprep_root_pool }}/ROOT/ubuntu"
+    state: present
+    extra_zfs_properties:
       canmount: noauto
       mountpoint: /
-#- name: create root fs
-#  zfs:
-#    name: "{{ zfsprep_root_pool }}/ROOT/ubuntu"
-#    state: present
-#    extra_zfs_properties:
-#      canmount: noauto
-#      mountpoint: /
-- name: manually mount rpool/ROOT/ubuntu before creating other mountpoints
+- name: manually mount rpool/ROOT before creating other mountpoints
   shell: "zfs mount {{ zfsprep_root_pool }}/ROOT"
 - name: create mountpoints in root pool
   zfs:
