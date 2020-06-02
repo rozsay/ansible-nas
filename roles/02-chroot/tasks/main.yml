@@ -46,6 +46,11 @@
     name: dosfstools
     state: present
   when: zfsprep_efi|default(false)|bool == true
+- name: install grub-efi-amd64
+  apt:
+    name: grub-efi-amd64
+    state: present
+  when: zfsprep_efi|default(false)|bool == true
 - apt:
     name: grub-efi-amd64-signed
     state: present
@@ -54,29 +59,32 @@
     name: shim-signed
     state: present
   when: zfsprep_efi|default(false)|bool == true
-- name: set up grub partitions for efi
-  shell: "mkdosfs -F32 -n EFI {{ item }}"
-  with_items:
-    - "{{ zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list  }}"
-  when: zfsprep_efi|default(false)|bool == true
+#- name: set up grub partitions for efi
+#  shell: "mkdosfs -F32 -n EFI {{ item }}"
+#  with_items:
+#    - "{{ zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list  }}"
+#  when: zfsprep_efi|default(false)|bool == true
 #- name: create efi mountpoint
 #  file:
 #    path: /boot/efi
 #    state: directory
 #  when: zfsprep_efi|default(false)|bool == true
-- name: update fstab with efi
-  shell: "echo PARTUUID=$(blkid -s PARTUUID -o value {{ zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list | first }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 > /etc/fstab && mount /boot/efi"
-  when: zfsprep_efi|default(false)|bool == true
+##- name: update fstab with efi
+#  shell: "echo PARTUUID=$(blkid -s PARTUUID -o value {{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 > /etc/fstab && mount /boot/efi"
+#  when: zfsprep_efi|default(false)|bool == true
 - name: update fstab with backup efi partitions
   shell: "echo \\# PARTUUID=$(blkid -s PARTUUID -o value {{ item }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 >> /etc/fstab"
   when: zfsprep_efi|default(false)|bool == true
   with_items:
-    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list)[1:] }}"
-- name: update fstab with LUKS /boot volume
+#    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list)[1:] }}"
+    - "{{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }}"
+- name: update fstab with /boot volume
   shell: "echo UUID=$(blkid -s UUID -o value {{ item }}) /boot ext2 defaults 0 2 >> /etc/fstab"
   with_items:
-    - "{{ (zfsprep_root_device_list | length > 1) | ternary('/dev/md0', (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_crypt_part_append) | list).0) }}"
-  when: zfsprep_luks|default(false)|bool == true
+#    - "{{ (zfsprep_root_device_list | length > 1) | ternary('/dev/md0', (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_crypt_part_append) | list).0) }}"
+    - "{{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }}"
+#  when: zfsprep_luks|default(false)|bool == true
+  when: zfsprep_efi|default(false)|bool == true
 - name: install cryptsetup
   apt:
     name: cryptsetup
@@ -88,33 +96,33 @@
     - "{{ zfsprep_luks_root_names + zfsprep_luks_data_names }}"
     - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_root_part_append) | list) + (zfsprep_data_partitions | ternary((zfsprep_data_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_data_part_append) | list),zfsprep_data_device_list)) }}"
   when: zfsprep_luks|default(false)|bool == true
-- name: install grub-efi-amd64
-  apt:
-    name: grub-efi-amd64
-    state: present
-  when: zfsprep_efi|default(false)|bool == true
+#- name: install grub-efi-amd64
+#  apt:
+#    name: grub-efi-amd64
+#    state: present
+#  when: zfsprep_efi|default(false)|bool == true
 - name: set root password
   user:
     name: root
     password: "{{ zfsprep_root_password_hash }}"
-- name: fix mount race condition
-  shell: "zfs set mountpoint=legacy {{ item }}"
-  with_items:
-    - "{{ zfsprep_root_pool }}/var/log"
-    - "{{ zfsprep_root_pool }}/var/tmp"
-- name: update fstab
-  lineinfile:
-    line: "{{ zfsprep_root_pool}}{{ item }} {{ item }} zfs defaults 0 0"
-    path: /etc/fstab
-    insertafter: EOF
-  with_items:
-    - /var/log
-    - /var/tmp
-- name: install mdadm in chroot
-  apt:
-    name: mdadm
-    state: latest
-  when: zfsprep_luks|default(false)|bool == true
+#- name: fix mount race condition
+#  shell: "zfs set mountpoint=legacy {{ item }}"
+#  with_items:
+#    - "{{ zfsprep_root_pool }}/var/log"
+#    - "{{ zfsprep_root_pool }}/var/tmp"
+#- name: update fstab
+#  lineinfile:
+#    line: "{{ zfsprep_root_pool}}{{ item }} {{ item }} zfs defaults 0 0"
+#    path: /etc/fstab
+#    insertafter: EOF
+#  with_items:
+#    - /var/log
+#    - /var/tmp
+#- name: install mdadm in chroot
+#  apt:
+#    name: mdadm
+#    state: latest
+#  when: zfsprep_luks|default(false)|bool == true
 - name: create swap zvol
   zfs:
     name: "{{ zfsprep_root_pool }}/swap "
@@ -145,6 +153,7 @@
       replace: 'GRUB_CMDLINE_LINUX="{{ zfsprep_grub_cmdline }}"'
     - regex: "^#(GRUB_TERMINAL.*)"
       replace: "\\1"
+- shell: "echo 'GRUB_DISABLE_OS_PROBER=true' >> /etc/default/grub"
 - shell: update-grub
 - shell: "grub-install {{ item }}"
   with_items:
@@ -153,13 +162,13 @@
 - name: install grub efi on primary disk
   shell: "grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy"
   when: zfsprep_efi|default(false)|bool == true
-- name: write grub boot sector/setup efi on secondary disks
-  shell: "dd if={{ zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list | first }} of={{ item.0 }} && efibootmgr -c -g -d {{ item.1 }} -p 3 -L 'ubuntu-{{ item.2 }}' -l '\\EFI\\Ubuntu\\grubx64.efi'"
-  with_together:
-    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list)[1:] }}"
-    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>') | list)[1:] }}"
-    - "{{ zfsprep_root_disks[1:] }}"
-  when: (zfsprep_efi|default(false)|bool == true) and (zfsprep_root_device_list | length > 1)
+#- name: write grub boot sector/setup efi on secondary disks
+#  shell: "dd if={{ zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list | first }} of={{ item.0 }} && efibootmgr -c -g -d {{ item.1 }} -p 3 -L 'ubuntu-{{ item.2 }}' -l '\\EFI\\Ubuntu\\grubx64.efi'"
+#  with_together:
+#    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list)[1:] }}"
+#    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>') | list)[1:] }}"
+#    - "{{ zfsprep_root_disks[1:] }}"
+#  when: (zfsprep_efi|default(false)|bool == true) and (zfsprep_root_device_list | length > 1)
 - name: ensure zfs.target starts on boot
   systemd:
     name: zfs.target
@@ -181,3 +190,4 @@
   systemd:
     name: systemd-networkd
     enabled: yes
+shell: "( crontab -l ; echo "@reboot mount /boot ; mount /boot/efi" ) | crontab -"
