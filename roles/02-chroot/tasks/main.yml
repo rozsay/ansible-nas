@@ -19,16 +19,38 @@
     src: /proc/self/mounts
     dest: /etc/mtab
     state: link
+- name: ensure live system has necessary packages installed
+  apt:
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+#    upgrade: safe
+#    update_cache: true
+  become: true
+#  register: apt_out
+#- debug: var=apt_out
+#- debug: var={{ apt_out.stdout.split('\n')[:-1] }}
 - name: update apt cache
+  become: true
   apt:
     update_cache: yes
-- name: install our kernel
+    upgrade: yes
+- name: install egy
   apt:
-    name: "{{ zfsprep_kernel_package }}"
+    name: linux-image-generic
     install_recommends: no
     state: present
+- name: install egye
+  apt:
+    name: linux-headers-generic
+    state: present
+#- name: install our kernel
+#  apt:
+#    name: "{{ zfsprep_kernel_package }}"
+#    install_recommends: no
+#    state: present
 - name: zfs-dkms note-incompatible-licenses note true
-  shell: "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections
+  shell: "zfs-dkms zfs-dkms/note-incompatible-licenses note true | debconf-set-selections"
 - name: install zfs-dkms
   apt:
     name: zfs-dkms
@@ -74,10 +96,10 @@
 #  when: zfsprep_efi|default(false)|bool == true
 - name: update fstab with backup efi partitions
   shell: "echo \\# PARTUUID=$(blkid -s PARTUUID -o value {{ item }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 >> /etc/fstab"
-  when: zfsprep_efi|default(false)|bool == true
   with_items:
 #    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list)[1:] }}"
-    - "{{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }}"
+    - "{{ zfsprep_root_device_list }}{{ zfsprep_efi_part_append }}"
+  when: zfsprep_efi|default(false)|bool == true
 - name: update fstab with /boot volume
   shell: "echo UUID=$(blkid -s UUID -o value {{ item }}) /boot ext2 defaults 0 2 >> /etc/fstab"
   with_items:
@@ -85,17 +107,17 @@
     - "{{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }}"
 #  when: zfsprep_luks|default(false)|bool == true
   when: zfsprep_efi|default(false)|bool == true
-- name: install cryptsetup
-  apt:
-    name: cryptsetup
-    state: latest
-  when: zfsprep_luks|default(false)|bool == true
-- name: update crypttab
-  shell: "echo {{ item.0 }} UUID=$(blkid -s UUID -o value {{ item.1 }}) none luks,discard,initramfs >> /etc/crypttab"
-  with_together:
-    - "{{ zfsprep_luks_root_names + zfsprep_luks_data_names }}"
-    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_root_part_append) | list) + (zfsprep_data_partitions | ternary((zfsprep_data_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_data_part_append) | list),zfsprep_data_device_list)) }}"
-  when: zfsprep_luks|default(false)|bool == true
+#- name: install cryptsetup
+#  apt:
+#    name: cryptsetup
+#    state: latest
+#  when: zfsprep_luks|default(false)|bool == true
+#- name: update crypttab
+#  shell: "echo {{ item.0 }} UUID=$(blkid -s UUID -o value {{ item.1 }}) none luks,discard,initramfs >> /etc/crypttab"
+#  with_together:
+#    - "{{ zfsprep_luks_root_names + zfsprep_luks_data_names }}"
+#    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_root_part_append) | list) + (zfsprep_data_partitions | ternary((zfsprep_data_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_data_part_append) | list),zfsprep_data_device_list)) }}"
+#  when: zfsprep_luks|default(false)|bool == true
 #- name: install grub-efi-amd64
 #  apt:
 #    name: grub-efi-amd64
@@ -190,4 +212,4 @@
   systemd:
     name: systemd-networkd
     enabled: yes
-shell: "( crontab -l ; echo "@reboot mount /boot ; mount /boot/efi" ) | crontab -"
+#- shell: "( crontab -l ; echo '"'@reboot mount /boot ; mount /boot/efi'"' ) | crontab -"
