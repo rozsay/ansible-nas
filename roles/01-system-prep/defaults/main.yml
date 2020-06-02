@@ -1,4 +1,5 @@
 ---
+isneeded: false
 zfsprep_ubuntu_release: focal
 zfsprep_zap_disks: true
 zfsprep_efi: true
