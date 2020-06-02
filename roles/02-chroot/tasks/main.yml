@@ -27,6 +27,12 @@
     name: "{{ zfsprep_kernel_package }}"
     install_recommends: no
     state: present
+- name: zfs-dkms note-incompatible-licenses note true
+  shell: "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections
+- name: install zfs-dkms
+  apt:
+    name: zfs-dkms
+    state: present
 - name: install zfs-initramfs
   apt:
     name: zfs-initramfs
@@ -40,16 +46,24 @@
     name: dosfstools
     state: present
   when: zfsprep_efi|default(false)|bool == true
+- apt:
+    name: grub-efi-amd64-signed
+    state: present
+  when: zfsprep_efi|default(false)|bool == true
+- apt:
+    name: shim-signed
+    state: present
+  when: zfsprep_efi|default(false)|bool == true
 - name: set up grub partitions for efi
   shell: "mkdosfs -F32 -n EFI {{ item }}"
   with_items:
     - "{{ zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list  }}"
   when: zfsprep_efi|default(false)|bool == true
-- name: create efi mountpoint
-  file:
-    path: /boot/efi
-    state: directory
-  when: zfsprep_efi|default(false)|bool == true
+#- name: create efi mountpoint
+#  file:
+#    path: /boot/efi
+#    state: directory
+#  when: zfsprep_efi|default(false)|bool == true
 - name: update fstab with efi
   shell: "echo PARTUUID=$(blkid -s PARTUUID -o value {{ zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list | first }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 > /etc/fstab && mount /boot/efi"
   when: zfsprep_efi|default(false)|bool == true

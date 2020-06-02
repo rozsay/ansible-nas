@@ -152,40 +152,45 @@
 #    - "{{ (zfsprep_root_device_list | length > 1) | (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list).0 }}"
     - "{{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }}"
 #  when: zfsprep_crypt | default(false) | bool == true
+  when: isneeded | default(false) | bool == true
 - name: format and mount {{ zfsprep_installdir }}boot/efi for crypt
   shell: "mke2fs -t ext2 {{ item }} && mkdir {{ zfsprep_installdir }}boot/efi && mount {{ item }} {{ zfsprep_installdir }}boot/efi"
   with_items:
 #    - "{{ (zfsprep_root_device_list | length > 1) | (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_efi_part_append) | list).0 }}"
     -  - "{{ zfsprep_root_device_list }}{{ zfsprep_efi_part_append }}"
 #  when: zfsprep_crypt | default(false) | bool == true
+  when: isneeded | default(false) | bool == true
 - name: run debootstrap and set devices=off for root pool
   shell: "debootstrap {{ zfsprep_ubuntu_release }} {{ zfsprep_installdir }} && zfs set devices=off {{ zfsprep_root_pool }}"
 #- name: set devices=off for data pool
 #  shell: "zfs set devices=off {{ zfsprep_data_pool }}"
 #  when: zfsprep_data_disks | length > 0
+  when: isneeded | default(false) | bool == true
 - name: write /etc/hostname in chroot
   copy:
     content: "{{ zfsprep_hostname.short }}"
-    dest: {{ zfsprep_installdir }}etc/hostname
+    dest: "{{ zfsprep_installdir }}etc/hostname"
 - name: write default network config in chroot
   template:
     src: network.j2
-    dest: "{{ zfsprep_installdir }}etc/netplan/{01-network.yaml"
+    dest: "{{ zfsprep_installdir }}etc/netplan/01-network.yaml"
 - name: write {{ zfsprep_installdir }}apt/sources.list in chroot
   template:
     src: sources.j2
-    dest: {{ zfsprep_installdir }}etc/apt/sources.list
+    dest: "{{ zfsprep_installdir }}etc/apt/sources.list"
 - name: add hostname entries to {{ zfsprep_installdir }}hosts in chroot
   lineinfile:
     line: "127.0.0.1 {{ zfsprep_hostname.short }} {{ zfsprep_hostname.long }}"
-    path: {{ zfsprep_installdir }}etc/hosts
+    path: "{{ zfsprep_installdir }}etc/hosts"
     state: present
     insertbefore: BOF
+  when: isneeded | default(false) | bool == true
 - name: mount special filesystems for chroot
   shell: "mount --rbind {{ item }}"
   with_items:
-    - /dev {{ zfsprep_installdir }}dev
-    - /proc {{ zfsprep_installdir }}proc
-    - /sys {{ zfsprep_installdir }}sys
+    - /dev "{{ zfsprep_installdir }}dev"
+    - /proc "{{ zfsprep_installdir }}proc"
+    - /sys "{{ zfsprep_installdir }}sys"
   args:
     warn: false
+  when: isneeded | default(false) | bool == true
