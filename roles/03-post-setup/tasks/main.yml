@@ -9,7 +9,24 @@
       - ansible
       - openssh-server
       - mc
+      - ssh
       - nano
+      - lshw
+      - rsyn
+      - ncdu
+      - ethtool
+      - wget
+      - git
+      - gpart
+      - gparted
+      - ssh-askpass
+      - net-tools
+      - tree
+      - htop
+      -  strace
+      - p7zip
+      - p7zip-full
+      -  p7zip-rar
     state: present
 #    name: "{{ item }}"
 #    state: present

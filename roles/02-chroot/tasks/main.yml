@@ -25,9 +25,8 @@
     update_cache: true
     cache_valid_time: 3600
     upgrade: safe
-    update_cache: true
   become: true
-#  register: apt_out
+  register: apt_out
 #- debug: var=apt_out
 #- debug: var={{ apt_out.stdout.split('\n')[:-1] }}
 - name: update apt cache
@@ -35,12 +34,12 @@
   apt:
     update_cache: yes
     upgrade: 'yes'
-- name: install egy
+- name: install linux-image-generic
   apt:
     name: linux-image-generic
     install_recommends: no
     state: present
-- name: install egye
+- name: install linux-headers-generic
   apt:
     name: linux-headers-generic
     state: present
@@ -151,37 +150,34 @@
 #    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list)[1:] }}"
     - "{{ zfsprep_root_device_list }}{{ zfsprep_efi_part_append }}"
   when: zfsprep_efi|default(false)|bool == true
-- name: Check if zfs-import-scan.service are deployed
-  command: systemctl is-enabled --quiet "{{ item }}"
-  register: zfs-import-scan.service_enabled
-  ignore_errors: true
-  with_items:
-    - zfs-import-scan.service
-  - debug:
-    var: zfs-import-scan.service_enabled
-- name: Check that services are running
-  command: systemctl is-active --quiet "{{ item.item }}"
-  with_items: "{{ zfs-import-scan.service_enabled.results }}"
-  when: item.rc == 1
-- name: Start and enable zfs-import-scan.service services
-  service: name={{ item.item }} state=start enabled=yes
-  with_items: "{{ zfs-import-scan.service.results }}"
-  when: item.rc == 1
-- name: create swap zvol
-  zfs:
-    name: "{{ zfsprep_root_pool }}/swap "
-    state: present
-    extra_zfs_properties:
-      "{{ zfsprep_swap_opts }}"
-- name: mkswap
-  shell: "mkswap -f /dev/zvol/{{ zfsprep_root_pool }}/swap && echo /dev/zvol/{{ zfsprep_root_pool }}/swap none swap defaults 0 0 >> /etc/fstab && swapon -av"
-  when: zfsprep_swap|default(false)|bool == true
-- lineinfile:
-    line: "RESUME=none"
-    path: /etc/initramfs-tools/conf.d/resume
-    create: yes
-    state: present
-  when: zfsprep_swap|default(false)|bool == true
+#- name: Check if zfs-import-scan.service are deployed
+#  shell: systemctl enable zfs-import-scan.service 
+- name: Start and Enable Airflow
+  systemd:
+    name:  zfs-import-scan.service
+    state: started
+    enabled: yes
+    daemon-reload: yes
+#- name: Check whether swap is already enabled or not
+#    shell: cat /etc/sysctl.conf
+#    register: swap_enabled
+#- name: create swap zvol
+#  zfs:
+#    name: "{{ zfsprep_root_pool }}/swap "
+#    state: present
+#    extra_zfs_properties:
+#      "{{ zfsprep_swap_opts }}"
+#    when: not swap_file_check.stat.exists
+#- name: mkswap
+#  shell: "mkswap -f /dev/zvol/{{ zfsprep_root_pool }}/swap && echo /dev/zvol/{{ zfsprep_root_pool }}/swap none swap defaults 0 0 >> /etc/fstab && swapon -av"
+#  when: zfsprep_swap|default(false)|bool == true
+#  when: not swap_file_check.stat.exists
+#- lineinfile:
+#    line: "RESUME=none"
+#    path: /etc/initramfs-tools/conf.d/resume
+#    create: yes
+#    state: present
+#  when: zfsprep_swap|default(false)|bool == true
 - shell: "update-initramfs -c -k all"
 - name: modify /etc/default/grub
   replace:
@@ -217,6 +213,35 @@
   systemd:
     name: zfs.target
     enabled: yes
+#- name: Add user nagios
+#    user:
+#      name: nagios
+#      groups: nagios
+#      shell: /sbin/nologin
+#      append: yes
+#      comment: "Nagios nologin User"
+#      state: present
+#      become: true
+- name: Check if user exists
+  command: getent passwd sa
+  register: user_on_board
+  ignore_errors: yes # continue with the playbook
+#- name: Creating user "{{ uusername }}" with admin access
+- name: Creating user sa with admin access
+  user: 
+#    name: {{ uusername }}
+#    password: {{ upassword | password_hash('sha512') }}
+    name: sa
+    password: '$6$vxt55gTEa3g/uPD2$ByOhaKjqaYsK6DN82HGI9p7wuV33b9a7hsmKbr6UcuBiQCYgKRrWFXLfJe9WiqOmRgzisUAluIRmTF27hZogP0'
+    groups: users, sudo    # Empty by default.
+#    groups: admin append=yes
+    state: present
+    shell: /bin/bash       # Defaults to /bin/bash
+    system: no             # Defaults to no system: Set this to "yes" to make it a system user. No shell or home directory will be made u>
+    createhome: yes        # Defaults to yes
+    home: /home/sa         # Defaults to /home/<username>
+#  when:  assigned_role  == "yes"
+  when: user_on_board.rc == 0
 - name: install firstboot service
   template:
     src: firstboot.service.j2
@@ -234,4 +259,9 @@
   systemd:
     name: systemd-networkd
     enabled: yes
+- name: Creates an entry like "@reboot /some/job.sh"
+  cron:
+    name: "a job for reboot"
+    special_time: reboot
+    job: " mount /boot ; mount /boot/efi"
 #- shell: "( crontab -l ; echo '"'@reboot mount /boot ; mount /boot/efi'"' ) | crontab -"
