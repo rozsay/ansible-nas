@@ -24,8 +24,8 @@
     state: present
     update_cache: true
     cache_valid_time: 3600
-#    upgrade: safe
-#    update_cache: true
+    upgrade: safe
+    update_cache: true
   become: true
 #  register: apt_out
 #- debug: var=apt_out
@@ -94,18 +94,18 @@
 ##- name: update fstab with efi
 #  shell: "echo PARTUUID=$(blkid -s PARTUUID -o value {{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 > /etc/fstab && mount /boot/efi"
 #  when: zfsprep_efi|default(false)|bool == true
-- name: update fstab with backup efi partitions
-  shell: "echo \\# PARTUUID=$(blkid -s PARTUUID -o value {{ item }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 >> /etc/fstab"
-  with_items:
-#    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list)[1:] }}"
-    - "{{ zfsprep_root_device_list }}{{ zfsprep_efi_part_append }}"
-  when: zfsprep_efi|default(false)|bool == true
 - name: update fstab with /boot volume
   shell: "echo UUID=$(blkid -s UUID -o value {{ item }}) /boot ext2 defaults 0 2 >> /etc/fstab"
   with_items:
 #    - "{{ (zfsprep_root_device_list | length > 1) | ternary('/dev/md0', (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_crypt_part_append) | list).0) }}"
     - "{{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }}"
 #  when: zfsprep_luks|default(false)|bool == true
+  when: zfsprep_efi|default(false)|bool == true
+- name: update fstab with efi partitions
+  shell: "echo UUID=$(blkid -s UUID -o value {{ item }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 >> /etc/fstab"
+  with_items:
+#    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list)[1:] }}"
+    - "{{ zfsprep_root_device_list }}{{ zfsprep_efi_part_append }}"
   when: zfsprep_efi|default(false)|bool == true
 #- name: install cryptsetup
 #  apt:
@@ -145,15 +145,37 @@
 #    name: mdadm
 #    state: latest
 #  when: zfsprep_luks|default(false)|bool == true
+- name: update fstab with backup efi partitions
+  shell: "echo UUID=$(blkid -s UUID -o value {{ item }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 >> /etc/fstab"
+  with_items:
+#    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list)[1:] }}"
+    - "{{ zfsprep_root_device_list }}{{ zfsprep_efi_part_append }}"
+  when: zfsprep_efi|default(false)|bool == true
+- name: Check if zfs-import-scan.service are deployed
+  command: systemctl is-enabled --quiet "{{ item }}"
+  register: zfs-import-scan.service_enabled
+  ignore_errors: true
+  with_items:
+    - zfs-import-scan.service
+  - debug:
+    var: zfs-import-scan.service_enabled
+- name: Check that services are running
+  command: systemctl is-active --quiet "{{ item.item }}"
+  with_items: "{{ zfs-import-scan.service_enabled.results }}"
+  when: item.rc == 1
+- name: Start and enable zfs-import-scan.service services
+  service: name={{ item.item }} state=start enabled=yes
+  with_items: "{{ zfs-import-scan.service.results }}"
+  when: item.rc == 1
 - name: create swap zvol
   zfs:
     name: "{{ zfsprep_root_pool }}/swap "
     state: present
     extra_zfs_properties:
       "{{ zfsprep_swap_opts }}"
-#- name: mkswap
-#  shell: "mkswap -f /dev/zvol/{{ zfsprep_root_pool }}/swap && echo /dev/zvol/{{ zfsprep_root_pool }}/swap none swap defaults 0 0 >> /etc/fstab && swapon -av"
-#  when: zfsprep_swap|default(false)|bool == true
+- name: mkswap
+  shell: "mkswap -f /dev/zvol/{{ zfsprep_root_pool }}/swap && echo /dev/zvol/{{ zfsprep_root_pool }}/swap none swap defaults 0 0 >> /etc/fstab && swapon -av"
+  when: zfsprep_swap|default(false)|bool == true
 - lineinfile:
     line: "RESUME=none"
     path: /etc/initramfs-tools/conf.d/resume
