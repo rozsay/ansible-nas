@@ -87,8 +87,8 @@
 #  when: zfsprep_data_partitions | default(false) | bool == true
 - name: set up crypt devices
   shell: "echo -n {{ zfsprep_crypt_passphrase }} | zpool create {{ zfsprep_root_pool_opts | join(' ') }} {{ zfsprep_root_pool }} {{ zfsprep_root_pool_type }} {{ zfsprep_root_device_list }}{{ zfsprep_root_part_append }} -f"
-  when: zfsprep_crypt | default(false) | bool == true
-  when: isneeded | default(false) | bool == true
+#  when: zfsprep_crypt | default(false) | bool == true
+  when:  isneeded | default(false) | bool == true
 - name: create root dataset
   zfs:
     name: "{{ zfsprep_root_pool }}/root"
@@ -154,7 +154,7 @@
 #  when: zfsprep_crypt | default(false) | bool == true
   when: isneeded | default(false) | bool == true
 - name: format and mount {{ zfsprep_installdir }}boot/efi for crypt
-  shell: "mke2fs -t ext2 {{ item }} && mkdir {{ zfsprep_installdir }}boot/efi && mount {{ item }} {{ zfsprep_installdir }}boot/efi"
+  shell: "mkfs.msdos -F 32 -n EFI {{ item }} && mkdir {{ zfsprep_installdir }}boot/efi && mount {{ item }} {{ zfsprep_installdir }}boot/efi"
   with_items:
 #    - "{{ (zfsprep_root_device_list | length > 1) | (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_efi_part_append) | list).0 }}"
     -  - "{{ zfsprep_root_device_list }}{{ zfsprep_efi_part_append }}"

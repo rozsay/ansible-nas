@@ -3,6 +3,7 @@
 isneeded: true
 zfsprep_efi: true
 zfsprep_swap: true
+zfsprep_root_pool: rpool
 zfsprep_swap_opts:
   volsize: 1G
   compression: zle

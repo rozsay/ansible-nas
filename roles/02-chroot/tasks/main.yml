@@ -34,7 +34,7 @@
   become: true
   apt:
     update_cache: yes
-    upgrade: yes
+    upgrade: 'yes'
 - name: install egy
   apt:
     name: linux-image-generic
@@ -118,11 +118,11 @@
 #    - "{{ zfsprep_luks_root_names + zfsprep_luks_data_names }}"
 #    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_root_part_append) | list) + (zfsprep_data_partitions | ternary((zfsprep_data_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_data_part_append) | list),zfsprep_data_device_list)) }}"
 #  when: zfsprep_luks|default(false)|bool == true
-#- name: install grub-efi-amd64
-#  apt:
-#    name: grub-efi-amd64
-#    state: present
-#  when: zfsprep_efi|default(false)|bool == true
+- name: install grub-efi-amd64
+  apt:
+    name: grub-efi-amd64
+    state: present
+  when: zfsprep_efi|default(false)|bool == true
 - name: set root password
   user:
     name: root
@@ -151,9 +151,9 @@
     state: present
     extra_zfs_properties:
       "{{ zfsprep_swap_opts }}"
-- name: mkswap
-  shell: "mkswap -f /dev/zvol/{{ zfsprep_root_pool }}/swap && echo /dev/zvol/{{ zfsprep_root_pool }}/swap none swap defaults 0 0 >> /etc/fstab && swapon -av"
-  when: zfsprep_swap|default(false)|bool == true
+#- name: mkswap
+#  shell: "mkswap -f /dev/zvol/{{ zfsprep_root_pool }}/swap && echo /dev/zvol/{{ zfsprep_root_pool }}/swap none swap defaults 0 0 >> /etc/fstab && swapon -av"
+#  when: zfsprep_swap|default(false)|bool == true
 - lineinfile:
     line: "RESUME=none"
     path: /etc/initramfs-tools/conf.d/resume
