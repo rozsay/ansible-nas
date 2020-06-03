@@ -2,5 +2,5 @@
 packages:
   - gdisk
   - ansible
-  - vim
-  - gnupg2
+  - openssh-server
+  - mc
