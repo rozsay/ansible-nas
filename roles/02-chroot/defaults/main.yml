@@ -40,7 +40,7 @@ zfsprep_userpassword: "$2y$10$1JdBtEi5WePZ7S7LscCvtu26xf/7uVdKywSBDhlEd92TZLun76
 debug:
   msg: "zfsprep_root_disks_by_id:  {{ zfsprep_root_disks_by_id }} "
 debug:
-  msg: zfsprep_data_disks_by_id: {{ zfsprep_data_disks_by_id }} "
+  msg: "zfsprep_data_disks_by_id: {{ zfsprep_data_disks_by_id }} "
 
 debug:
   msg: "zfsprep_root_device_list:  {{ zfsprep_root_device_list }} "

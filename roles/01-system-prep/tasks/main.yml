@@ -48,11 +48,11 @@
   with_items:
     - "{{ zfsprep_root_disks_by_id }}"
 - name: set up efi disk partitions
-  shell: "sgdisk {{ zfsprep_partition_flags }} {{ item }}"
+  shell: "sgdisk {{ zfsprep_efi_partition_flags }} {{ item }}"
   with_items:
     - "{{ zfsprep_root_device_list }}"
 - name: set up boot disk partitions
-  shell: "sgdisk {{ zfsprep_cryptboot_partition_flags }} {{ item }}"
+  shell: "sgdisk {{ zfsprep_boot_partition_flags }} {{ item }}"
   with_items:
     - "{{ zfsprep_root_device_list }}"
 - name: set up root disk partitions
@@ -67,41 +67,32 @@
 - name: debug directory output
   debug:
     msg: "{{r.results|map(attribute='stdout_lines')|list}}"
-- debug:
-    msg: Partition list {{  zfsprep_root_device_list }}
-    msg: Partition flag {{  zfsprep_partition_flags }}
-	
-- name: check ZFS pool existance
-  command: zpool list -Ho name {{ zfsprep_root_pool }}
-  register: result_pool_list
-  ignore_errors: yes
-  changed_when: false
+
+#- name: check ZFS pool existance
+#  command: zpool list -Ho name {{ zfsprep_root_pool }}
+#  register: result_pool_list
+#  ignore_errors: yes
+#  changed_when: false
   
-- name: check ZFS data pool existance
-  command: zpool list -Ho name {{ zfsprep_data_pool }}
-  register: result_datapool_list
-  ignore_errors: yes
-  changed_when: false
-  
-#- name: destroy ZFS pool
-#  command: zpool destroy {{ zfs_pool_name }}
-#  when:
-#    - zfs_pool_state | default('present') == 'absent'
-#    - result_pool_list.rc == 0
-		
+#- name: check ZFS data pool existance
+#  command: zpool list -Ho name {{ zfsprep_data_pool }}
+#  register: result_datapool_list
+#  ignore_errors: yes
+#  changed_when: false
+#- name: destroy ZFS pool#command: zpool destroy {{ zfs_pool_name }}#when:#- zfs_pool_state | default('present') == 'absent'#- result_pool_list.rc == 0
 - name: set up root zfs crypt devices
   shell: "echo -n {{ zfsprep_crypt_passphrase }} | zpool create {{ zfsprep_crypt_flags | join(' ') }} {{ zfsprep_root_pool_opts | join(' ') }} {{ zfsprep_root_pool }} {{ zfsprep_root_pool_type }} {{ zfsprep_root_device_list }}{{ zfsprep_root_part_append }} -f"
   when:
     - zfsprep_crypt | default(false) | bool == true
-    - zfs_pool_state | default('present') == 'present'
-    - result_pool_list.rc == 1  
+#    - zfs_pool_state | default('present') == 'present'
+#    - result_pool_list.rc == 1  
 
 - name: set up root zfs devices
   shell: "zpool create {{ zfsprep_root_pool_opts | join(' ') }} {{ zfsprep_root_pool }} {{ zfsprep_root_pool_type }} {{ zfsprep_root_device_list }}{{ zfsprep_root_part_append }} -f"
   when:
     - zfsprep_crypt | default(false) | bool != true
-    - zfs_pool_state | default('present') == 'present'
-    - result_pool_list.rc == 1  
+#    - zfs_pool_state | default('present') == 'present'
+#    - result_pool_list.rc == 1  
 
 - name: create root dataset
   zfs:
@@ -112,9 +103,9 @@
       mountpoint: /
 #      canmount: off
 #      mountpoint: none
-  when:
-    - zfs_pool_state | default('present') == 'absent'
-    - result_pool_list.rc == 0
+#  when:
+#    - zfs_pool_state | default('present') == 'absent'
+#    - result_pool_list.rc == 0
 
 - name: manually mount rpool/root before creating other mountpoints
   shell: "zfs mount {{ zfsprep_root_pool }}/root"
@@ -137,8 +128,8 @@
 #  shell: "zpool create {{ zfsprep_data_pool_opts | join(' ') }} {{ zfsprep_data_pool }} {{ zfsprep_data_pool_type }} {{ map('regex_replace', '(.*)', '/dev/mapper/\\g<1>') | list, (zfsprep_data_partitions | ternary((zfsprep_data_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_data_part_append) | list), zfsprep_data_device_list)) | join(' ') }}"
   when: 
     - zfsprep_data_disks | default(false) | bool == true
-    - zfs_datapool_state | default('present') == 'present'
-    - result_datapool_list.rc == 1  
+#    - zfs_datapool_state | default('present') == 'present'
+#    - result_datapool_list.rc == 1  
     - zfsprep_data_disks | length > 0
 - name: create data dataset
   zfs:
@@ -147,9 +138,7 @@
     extra_zfs_properties:
       mountpoint: /data
   when: zfsprep_data_disks | length > 0
-- debug:
-    msg: Partition list {{  zfsprep_root_device_list }}
-	
+#- debug: msg: Partition list "{{  zfsprep_root_device_list }}"
 - name: format and mount {{ zfsprep_installdir }}boot
   shell: "mke2fs -t ext2 {{ item }} && mkdir {{ zfsprep_installdir }}boot && mount {{ item }} {{ zfsprep_installdir }}boot"
   with_items:
