@@ -43,29 +43,22 @@
   with_items: 
     - dosfstools
   when: zfsprep_crypt | default(false) | bool == true
-#- debug:
-#    msg: Eyt kell {{ zfsprep_root_disks_by_id }}
 - name: forcibly zap disks
   shell: "sgdisk --zap-all {{ item }}"
   with_items:
     - "{{ zfsprep_root_disks_by_id }}"
-  when: isneeded | default(false) | bool == true
 - name: set up efi disk partitions
   shell: "sgdisk {{ zfsprep_partition_flags }} {{ item }}"
   with_items:
     - "{{ zfsprep_root_device_list }}"
-
-  when: isneeded | default(false) | bool == true
 - name: set up boot disk partitions
   shell: "sgdisk {{ zfsprep_cryptboot_partition_flags }} {{ item }}"
   with_items:
     - "{{ zfsprep_root_device_list }}"
-  when: isneeded | default(false) | bool == true
 - name: set up root disk partitions
   shell: "sgdisk {{ zfsprep_root_partition_flags }} {{ item }}"
   with_items:
     - "{{ zfsprep_root_device_list }}"
-  when: isneeded | default(false) | bool == true
 - name: print info disk
   shell: "sgdisk --print {{ item }}"
   register: r
@@ -76,19 +69,40 @@
     msg: "{{r.results|map(attribute='stdout_lines')|list}}"
 - debug:
     msg: Partition list {{  zfsprep_root_device_list }}
-- debug:
     msg: Partition flag {{  zfsprep_partition_flags }}
+	
+- name: check ZFS pool existance
+  command: zpool list -Ho name {{ zfsprep_root_pool }}
+  register: result_pool_list
+  ignore_errors: yes
+  changed_when: false
+  
+- name: check ZFS data pool existance
+  command: zpool list -Ho name {{ zfsprep_data_pool }}
+  register: result_datapool_list
+  ignore_errors: yes
+  changed_when: false
+  
+#- name: destroy ZFS pool
+#  command: zpool destroy {{ zfs_pool_name }}
+#  when:
+#    - zfs_pool_state | default('present') == 'absent'
+#    - result_pool_list.rc == 0
+		
+- name: set up root zfs crypt devices
+  shell: "echo -n {{ zfsprep_crypt_passphrase }} | zpool create {{ zfsprep_crypt_flags | join(' ') }} {{ zfsprep_root_pool_opts | join(' ') }} {{ zfsprep_root_pool }} {{ zfsprep_root_pool_type }} {{ zfsprep_root_device_list }}{{ zfsprep_root_part_append }} -f"
+  when:
+    - zfsprep_crypt | default(false) | bool == true
+    - zfs_pool_state | default('present') == 'present'
+    - result_pool_list.rc == 1  
 
-#- name: set up data disk partitions
-#  shell: "sgdisk {{ zfsprep_data_partition_flags }} {{ item }}"
-#  when: zfsprep_data_partitions | default(false) | bool == true
-#  with_items:
-#    - "{{ zfsprep_data_device_list }}"
-#  when: zfsprep_data_partitions | default(false) | bool == true
-- name: set up crypt devices
-  shell: "echo -n {{ zfsprep_crypt_passphrase }} | zpool create {{ zfsprep_root_pool_opts | join(' ') }} {{ zfsprep_root_pool }} {{ zfsprep_root_pool_type }} {{ zfsprep_root_device_list }}{{ zfsprep_root_part_append }} -f"
-#  when: zfsprep_crypt | default(false) | bool == true
-  when:  isneeded | default(false) | bool == true
+- name: set up root zfs devices
+  shell: "zpool create {{ zfsprep_root_pool_opts | join(' ') }} {{ zfsprep_root_pool }} {{ zfsprep_root_pool_type }} {{ zfsprep_root_device_list }}{{ zfsprep_root_part_append }} -f"
+  when:
+    - zfsprep_crypt | default(false) | bool != true
+    - zfs_pool_state | default('present') == 'present'
+    - result_pool_list.rc == 1  
+
 - name: create root dataset
   zfs:
     name: "{{ zfsprep_root_pool }}/root"
@@ -98,18 +112,13 @@
       mountpoint: /
 #      canmount: off
 #      mountpoint: none
-  when: isneeded | default(false) | bool == true
-#- name: create root fs
-#  zfs:
-#    name: "{{ zfsprep_root_pool }}/root/ubuntu"
-#    state: present
-#    extra_zfs_properties:
-#      canmount: noauto
-#      mountpoint: /
-#  when: isneeded | default(false) | bool == true
+  when:
+    - zfs_pool_state | default('present') == 'absent'
+    - result_pool_list.rc == 0
+
 - name: manually mount rpool/root before creating other mountpoints
   shell: "zfs mount {{ zfsprep_root_pool }}/root"
-  when: isneeded | default(false) | bool == true
+  
 #- name: create mountpoints in root pool
 #  zfs:
 #    name: "{{ item.name }}"
@@ -122,61 +131,58 @@
 #  file:
 #    path: /mnt/var/tmp
 #    mode: 01777
-##- name: create data zpool
-#  shell: "zpool create {{ zfsprep_data_pool_opts | join(' ') }} {{ zfsprep_data_pool }} {{ zfsprep_data_pool_type }} {{ (zfsprep_luks | default(false) | bool == true) | ternary(zfsprep_luks_data_names | map('regex_replace', '(.*)', '/dev/mapper/\\g<1>') | list, (zfsprep_data_partitions | ternary((zfsprep_data_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_data_part_append) | list),zfsprep_data_device_list))) | join(' ') }}"
-#  when: zfsprep_data_disks | length > 0
-#- name: create data dataset
-#  zfs:
-#    name: "{{ zfsprep_data_pool }}/data"
-#    state: present
-#    extra_zfs_properties:
-#      mountpoint: /data
-#  when: zfsprep_data_disks | length > 0
-#- name: create md0 for LUKS
-#  shell: "echo yes | mdadm --create /dev/md0 --level=1 --raid-devices={{ zfsprep_root_device_list | length }} {{ zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_crypt_part_append) | list | join(' ') }}"
-#  when: (zfsprep_root_device_list | length > 1) and (zfsprep_luks | default(false) | bool == true)
-#  name: format and mount /mnt/boot for crypt/LUKS
-#  shell: "mke2fs -t ext2 {{ item }} && mkdir /mnt/boot && mount {{ item }} /mnt/boot"
-#  with_items:
-#    - "{{ (zfsprep_root_device_list | length > 1) | ternary('/dev/md0', (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_crypt_part_append) | list).0) }}"
-#  when: zfsprep_luks | default(false) | bool == true
 
-#- name: debug directory output
-#  debug:
-#    msg: "{{r.results|map(attribute='stdout_lines')|list}}"
+- name: set up zfs data devices
+  shell: "zpool create {{ zfsprep_data_pool_opts | join(' ') }} {{ zfsprep_data_pool }} {{ zfsprep_data_pool_type }} {{ zfsprep_data_device_list }}{{ zfsprep_data_part_append }} -f"
+#  shell: "zpool create {{ zfsprep_data_pool_opts | join(' ') }} {{ zfsprep_data_pool }} {{ zfsprep_data_pool_type }} {{ map('regex_replace', '(.*)', '/dev/mapper/\\g<1>') | list, (zfsprep_data_partitions | ternary((zfsprep_data_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_data_part_append) | list), zfsprep_data_device_list)) | join(' ') }}"
+  when: 
+    - zfsprep_data_disks | default(false) | bool == true
+    - zfs_datapool_state | default('present') == 'present'
+    - result_datapool_list.rc == 1  
+    - zfsprep_data_disks | length > 0
+- name: create data dataset
+  zfs:
+    name: "{{ zfsprep_data_pool }}/data"
+    state: present
+    extra_zfs_properties:
+      mountpoint: /data
+  when: zfsprep_data_disks | length > 0
 - debug:
     msg: Partition list {{  zfsprep_root_device_list }}
-- name: format and mount {{ zfsprep_installdir }}boot for crypt
+	
+- name: format and mount {{ zfsprep_installdir }}boot
   shell: "mke2fs -t ext2 {{ item }} && mkdir {{ zfsprep_installdir }}boot && mount {{ item }} {{ zfsprep_installdir }}boot"
   with_items:
 #    - "{{ (zfsprep_root_device_list | length > 1) | (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list).0 }}"
     - "{{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }}"
-#  when: zfsprep_crypt | default(false) | bool == true
-  when: isneeded | default(false) | bool == true
-- name: format and mount {{ zfsprep_installdir }}boot/efi for crypt
+  
+- name: format and mount {{ zfsprep_installdir }}boot/efi
   shell: "mkfs.msdos -F 32 -n EFI {{ item }} && mkdir {{ zfsprep_installdir }}boot/efi && mount {{ item }} {{ zfsprep_installdir }}boot/efi"
   with_items:
 #    - "{{ (zfsprep_root_device_list | length > 1) | (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_efi_part_append) | list).0 }}"
     -  - "{{ zfsprep_root_device_list }}{{ zfsprep_efi_part_append }}"
-#  when: zfsprep_crypt | default(false) | bool == true
-  when: isneeded | default(false) | bool == true
+  when: zfsprep_efi | default(false) | bool == true
+  
+#- name: create efi mountpoint
+#  file:
+#    path: {{ zfsprep_installdir }}/boot/efi
+#    state: directory
+#  when: zfsprep_efi|default(false)|bool == true
+  
 - name: run debootstrap and set devices=off for root pool
   shell: "debootstrap {{ zfsprep_ubuntu_release }} {{ zfsprep_installdir }} && zfs set devices=off {{ zfsprep_root_pool }}"
-#- name: set devices=off for data pool
-#  shell: "zfs set devices=off {{ zfsprep_data_pool }}"
-#  when: zfsprep_data_disks | length > 0
-  when: isneeded | default(false) | bool == true
+
+- name: set devices=off for data pool
+  shell: "zfs set devices=off {{ zfsprep_data_pool }}"
+  when: zfsprep_data_disks | length > 0
+
 - name: write /etc/hostname in chroot
   copy:
     content: "{{ zfsprep_hostname.short }}"
     dest: "{{ zfsprep_installdir }}etc/hostname"
-- name: write default network config in chroot
-  template:
-    src: network.j2
-    dest: "{{ zfsprep_installdir }}etc/netplan/01-network.yaml"
 - name: write {{ zfsprep_installdir }}apt/sources.list in chroot
   template:
-    src: sources.j2
+    src: etc/apt/sources.j2
     dest: "{{ zfsprep_installdir }}etc/apt/sources.list"
 - name: add hostname entries to {{ zfsprep_installdir }}hosts in chroot
   lineinfile:
@@ -184,7 +190,6 @@
     path: "{{ zfsprep_installdir }}etc/hosts"
     state: present
     insertbefore: BOF
-  when: isneeded | default(false) | bool == true
 - name: mount special filesystems for chroot
   shell: "mount --rbind {{ item }}"
   with_items:
@@ -193,4 +198,3 @@
     - /sys "{{ zfsprep_installdir }}sys"
   args:
     warn: false
-  when: isneeded | default(false) | bool == true

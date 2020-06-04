@@ -3,4 +3,4 @@
 #    - shell: cp /root/VBoxGuestAdditions.iso /mnt/root/VBoxGuestAdditions.iso
 #- hosts: chroot
 #  roles:
-#    - role: 04-vagrant-setup
+#    - role: 09-vagrant-setup

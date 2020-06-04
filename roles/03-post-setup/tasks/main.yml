@@ -48,4 +48,11 @@
     regexp: '^(.*compress.*)$'
     replace: '#\1'
   with_items: "{{ zfsprep_logrotate_jobs.files }}"
-
+- name: Create a snapshot of rpool/root file system.
+  zfs:
+    name: {{ zfsprep_root_pool }}/root@{{ ansible_date_time.date }}install
+    state: present
+- name umount all
+  shell: mount | grep -v zfs | tac | awk '/mnt/ {print $3}' | xargs -i{} umount -lf {}
+- name: export all zpool
+  shell: zpool export -a

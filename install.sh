@@ -1,5 +1,4 @@
 #!/bin/bash
-
 ###################
 # Install ansible #
 if ! hash ansible >/dev/null 2>&1; then
@@ -9,7 +8,7 @@ if ! hash ansible >/dev/null 2>&1; then
 else
     echo "Ansible already installed"
 fi
-sudo apt-get install software-properties-common ansible git python-apt -y
+sudo apt-get install nano -y
 
 #####################################
 # Display real installation process #

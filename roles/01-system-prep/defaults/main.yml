@@ -4,59 +4,56 @@ zfsprep_ubuntu_release: focal
 zfsprep_zap_disks: true
 zfsprep_efi: true
 zfsprep_crypt: true
-zfsprep_netplan: true
-zfsprep_netplan_interface: "{{ (hostvars[inventory_hostname]['ansible_interfaces'] | difference(['lo'])).0 }}"
-zfsprep_netplan_address: "192.168.100.10"
-zfsprep_netplan_gw: "192.168.100.2"
-zfsprep_netplan_ns: "8.8.8.8"
+zfsprep_data_disks: false
+
 zfsprep_hostname:
-  short: zfsprep
-  long: zfsprep.test.local
+  short: nas
+  long: nas.test.local
 zfsprep_root_pool: rpool
-zfsprep_data_pool: bulk
+zfsprep_data_pool: data
 zfsprep_root_pool_type: ""
 zfsprep_data_pool_type: ""
 zfsprep_legacy_device_nodes: false
 zfsprep_installdir: /mnt/install/
 zfsprep_root_disks:
   - sda
+  - sdb
 #debug:
-#    msg: "DISK {{ zfsprep_root_disks }} "
-zfsprep_data_disks: []
+# msg: "DISK {{ zfsprep_root_disks }} "
+# zfsprep_data_disks: [sdc, sdd]
 
 zfsprep_root_disks_by_id: "/dev/disk/by-id/{{ (zfsprep_root_disks | map('extract', hostvars[inventory_hostname]['ansible_devices'], ['links', 'ids', 0]) | list).0 }}"
 #zfsprep_root_disks_by_id: "{{ zfsprep_root_disks | map('extract', hostvars[inventory_hostname]['ansible_devices'], ['links', 'ids', 0]) | list | map('regex_replace', '(.*)', '/dev/disk/by-id/\\g<1>') | list }}"
 zfsprep_data_disks_by_id: "{{ zfsprep_data_disks | map('extract', hostvars[inventory_hostname]['ansible_devices'], ['links', 'ids', 0]) | list | map('regex_replace', '(.*)', '/dev/disk/by-id/\\g<1>') | list }}"
+
 zfsprep_root_device_list: "{{ zfsprep_legacy_device_nodes | ternary((zfsprep_root_disks | map('regex_replace', '(.*)', '/dev/\\g<1>') | list), zfsprep_root_disks_by_id) }}"
 zfsprep_data_device_list: "{{ zfsprep_legacy_device_nodes | ternary((zfsprep_data_disks | map('regex_replace', '(.*)', '/dev/\\g<1>') | list), zfsprep_data_disks_by_id) }}"
+
 zfsprep_target_disks: "{{ zfsprep_legacy_device_nodes | ternary(((zfsprep_root_disks + zfsprep_data_disks) | map('regex_replace', '(.*)', '/dev/\\g<1>') | list),(zfsprep_root_disks_by_id + zfsprep_data_disks_by_id)) }}"
 #debug:
 #    msg: "DISK {{ zfsprep_target_disks }} "
 zfsprep_data_partitions: false
+
 zfsprep_efi_part_append: "{{ zfsprep_legacy_device_nodes | ternary('1', '-part1') }}"
 zfsprep_boot_part_append: "{{ zfsprep_legacy_device_nodes | ternary('2', '-part2') }}"
 zfsprep_root_part_append: "{{ zfsprep_legacy_device_nodes | ternary('3', '-part3') }}"
 zfsprep_data_part_append: "{{ zfsprep_legacy_device_nodes | ternary('1', '-part1') }}"
-zfsprep_crypt_part_append: "{{ zfsprep_legacy_device_nodes | ternary('4', '-part4') }}"
+
 zfsprep_mbr_partition_flags: " -a1 -n2:34:2047  -t2:EF02"
 zfsprep_efi_partition_flags: " -n1:1M:+512M -t1:EF00"
-zfsprep_cryptboot_partition_flags: "-n2:0:+512M  -t2:8300"
+zfsprep_boot_partition_flags: "-n2:0:+1024M  -t2:8300"
 zfsprep_root_partition_flags: "-n3:0:0 -t3:BF01"
-zfsprep_cryptroot_partition_flags: "-n3:0:0      -t3:8300"
-zfsprep_partition_flags: "{{ (zfsprep_efi | default(false) | bool | ternary(zfsprep_efi_partition_flags,zfsprep_mbr_partition_flags)) }}"
-#zfsprep_partition_flags: "{{ (zfsprep_efi | default(false) | bool | ternary(zfsprep_efi_partition_flags,zfsprep_mbr_partition_flags)) + ' ' + (zfsprep_luks | default(false) | bool | ternary(zfsprep_cryptboot_partition_flags + ' ' + zfsprep_cryptroot_partition_flags,zfsprep_root_partition_flags)) }}"
-#a8 for 4k size
-zfsprep_data_partition_flags: "-a8 -n1:0:0 {{ (zfsprep_luks | default(false) | bool | ternary('-t1:8300', '-t1:BF01')) }}"
-#zfsprep_crypt_flags: "-c aes-xts-plain64 -s 256 -h sha256"
-zfsprep_crypt_flags: " -O encryption=aes-256-gcm -O keylocation=prompt -O keyformat=passphrase"
+zfsprep_data_partition_flags: "-n3:0:0 -t3:BF01"
 
-zfsprep_luks_root_names:
-#  - e0
-#  - e1
-zfsprep_luks_data_names:
-#  - e2
-#  - e3
-zfsprep_crypt_passphrase: "Sasasa26"
+#zfsprep_crypt_flags: "-c aes-xts-plain64 -s 256 -h sha256"
+#zfsprep_crypt_flags: " -O encryption=aes-256-gcm -O keylocation=prompt -O keyformat=passphrase"
+zfsprep_crypt_flags: 
+  - " -O encryption=aes-256-gcm"
+  - " -O keylocation=prompt"
+  - " -O keyformat=passphrase "
+
+zfsprep_crypt_passphrase: "Password"
+
 zfsprep_root_pool_opts:
   - "-o ashift=12"
   - "-O atime=off"
@@ -65,11 +62,9 @@ zfsprep_root_pool_opts:
   - "-O normalization=formD"
   - "-O acltype=posixacl"
   - "-O dnodesize=auto"
-  - "-O encryption=aes-256-gcm"
-  - "-O keylocation=prompt"
-  - "-O keyformat=passphrase"
   - "-O xattr=sa"
   - "-O mountpoint=none -R {{ zfsprep_installdir }}"
+
 zfsprep_data_pool_opts:
   - "-o ashift=12"
   - "-O atime=off"
@@ -79,6 +74,7 @@ zfsprep_data_pool_opts:
   - "-O acltype=posixacl"
   - "-O dnodesize=auto"
   - "-O xattr=sa -O mountpoint=/data -R {{ zfsprep_installdir }}"
+
 zfsprep_root_volumes:
   - name: "{{ zfsprep_root_pool }}/home"
     properties:
@@ -104,3 +100,53 @@ zfsprep_root_volumes:
     properties:
       com.sun:auto-snapshot: false
       exec: on
+
+# defaults file for ansible-netplan
+netplan_config_file: /etc/netplan/config.yaml
+
+# switch to enable/disable the role completely
+netplan_enabled: true
+
+# Either networkd or NetworkManager
+netplan_renderer: networkd
+
+# defaults file for netplan-networking
+
+# The following structure is needed in a playbook that uses this role:
+#
+#  vars:
+#    interfaces:
+## a list of network interfaces to configure with netplan
+#      - interface: <interface name>
+## IPv4 configuration for the interface
+#        ipv4:
+## configured: true will get the interface to be assigned a static address, if given below, or DHCPv4, if not given
+#          configured: true
+#          address: 192.168.71.8/24
+#          gateway: 192.168.71.4
+## IPv6 configuration for the interface
+#        ipv6:
+## configured: true will get the interface to be assigned a static address, if given below, or DHCPv6, if not given
+#          configured: false
+## DNS configuration for the interface
+#        dns:
+#          nameservers:
+#            - <ns 1>
+#            - <ns 2>
+#            - <ns 3>
+#          searchdomains:
+#            - <domain 1>
+#            - <domain 2>
+
+zfsprep_netplan_interface: "{{ (hostvars[inventory_hostname]['ansible_interfaces'] | difference(['lo'])).0 }}"
+zfsprep_netplan_address: "192.168.100.10"
+zfsprep_netplan_gw: "192.168.100.2"
+zfsprep_netplan_ns: "8.8.8.8"
+
+netplan_remove_existing: true
+netplan_packages:
+  - nplan
+  - netplan.io
+netplan_pri_domain: test.local
+netplan_check_install: True
+netplan_apply: True

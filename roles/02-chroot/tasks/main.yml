@@ -27,8 +27,10 @@
     upgrade: safe
   become: true
   register: apt_out
-#- debug: var=apt_out
-#- debug: var={{ apt_out.stdout.split('\n')[:-1] }}
+
+- debug: var=apt_out
+- debug: var={{ apt_out.stdout.split('\n')[:-1] }}
+
 - name: update apt cache
   become: true
   apt:
@@ -43,11 +45,13 @@
   apt:
     name: linux-headers-generic
     state: present
+
 #- name: install our kernel
 #  apt:
 #    name: "{{ zfsprep_kernel_package }}"
 #    install_recommends: no
 #    state: present
+
 - name: zfs-dkms note-incompatible-licenses note true
   shell: "zfs-dkms zfs-dkms/note-incompatible-licenses note true | debconf-set-selections"
 - name: install zfs-dkms
@@ -80,53 +84,30 @@
     name: shim-signed
     state: present
   when: zfsprep_efi|default(false)|bool == true
-#- name: set up grub partitions for efi
-#  shell: "mkdosfs -F32 -n EFI {{ item }}"
-#  with_items:
-#    - "{{ zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list  }}"
-#  when: zfsprep_efi|default(false)|bool == true
-#- name: create efi mountpoint
-#  file:
-#    path: /boot/efi
-#    state: directory
-#  when: zfsprep_efi|default(false)|bool == true
-##- name: update fstab with efi
-#  shell: "echo PARTUUID=$(blkid -s PARTUUID -o value {{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 > /etc/fstab && mount /boot/efi"
-#  when: zfsprep_efi|default(false)|bool == true
+
 - name: update fstab with /boot volume
-#  shell: "echo UUID=$(blkid -s UUID -o value {{ item }}) /boot ext2 defaults 0 2 >> /etc/fstab"
   shell: "echo UUID=$(blkid -s UUID -o value {{ item }}) /boot ext2 noatime,nofail,x-systemd.device-timeout=1 0 1 >> /etc/fstab"
   with_items:
     - "{{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }}"
-#- "{{ (zfsprep_root_device_list | length > 1) | ternary('/dev/md0', (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_crypt_part_append) | list).0) }}"
-# when: zfsprep_luks|default(false)|bool == true
-  when: zfsprep_efi|default(false)|bool == true
+#- "{{ (zfsprep_root_device_list | length > 1) | ternary('/dev/md0', (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list).0) }}"
+
 - name: update fstab with efi partitions
   shell: "echo UUID=$(blkid -s UUID -o value {{ item }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 >> /etc/fstab"
   with_items:
-#    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list)[1:] }}"
     - "{{ zfsprep_root_device_list }}{{ zfsprep_efi_part_append }}"
   when: zfsprep_efi|default(false)|bool == true
-#- name: install cryptsetup
-#  apt:
-#    name: cryptsetup
-#    state: latest
-#  when: zfsprep_luks|default(false)|bool == true
-#- name: update crypttab
-#  shell: "echo {{ item.0 }} UUID=$(blkid -s UUID -o value {{ item.1 }}) none luks,discard,initramfs >> /etc/crypttab"
-#  with_together:
-#    - "{{ zfsprep_luks_root_names + zfsprep_luks_data_names }}"
-#    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_root_part_append) | list) + (zfsprep_data_partitions | ternary((zfsprep_data_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_data_part_append) | list),zfsprep_data_device_list)) }}"
-#  when: zfsprep_luks|default(false)|bool == true
+
 - name: install grub-efi-amd64
   apt:
     name: grub-efi-amd64
     state: present
   when: zfsprep_efi|default(false)|bool == true
+  
 - name: set root password
   user:
     name: root
     password: "{{ zfsprep_root_password_hash }}"
+
 #- name: fix mount race condition
 #  shell: "zfs set mountpoint=legacy {{ item }}"
 #  with_items:
@@ -140,40 +121,34 @@
 #  with_items:
 #    - /var/log
 #    - /var/tmp
-#- name: install mdadm in chroot
-#  apt:
-#    name: mdadm
-#    state: latest
-#  when: zfsprep_luks|default(false)|bool == true
-#- name: Check if zfs-import-scan.service are deployed
-#  shell: systemctl enable zfs-import-scan.service 
+
 - name: zfs-import-scan.service start and enabled
   systemd:
     name:  zfs-import-scan.service
     state: started
     enabled: yes
     daemon-reload: yes
-#- name: Check whether swap is already enabled or not
-#    shell: cat /etc/sysctl.conf
-#    register: swap_enabled
-#- name: create swap zvol
-#  zfs:
-#    name: "{{ zfsprep_root_pool }}/swap "
-#    state: present
-#    extra_zfs_properties:
-#      "{{ zfsprep_swap_opts }}"
+
+- name: create swap zvol
+  zfs:
+    name: "{{ zfsprep_root_pool }}/swap "
+    state: present
+    extra_zfs_properties:
+      "{{ zfsprep_swap_opts }}"
 #    when: not swap_file_check.stat.exists
-#- name: mkswap
-#  shell: "mkswap -f /dev/zvol/{{ zfsprep_root_pool }}/swap && echo /dev/zvol/{{ zfsprep_root_pool }}/swap none swap defaults 0 0 >> /etc/fstab && swapon -av"
-#  when: zfsprep_swap|default(false)|bool == true
-#  when: not swap_file_check.stat.exists
-#- lineinfile:
-#    line: "RESUME=none"
-#    path: /etc/initramfs-tools/conf.d/resume
-#    create: yes
-#    state: present
-#  when: zfsprep_swap|default(false)|bool == true
+- name: mkswap
+  shell: "mkswap -f /dev/zvol/{{ zfsprep_root_pool }}/swap && echo /dev/zvol/{{ zfsprep_root_pool }}/swap none swap defaults 0 0 >> /etc/fstab && swapon -av"
+  when: zfsprep_swap|default(false)|bool == true
+
+- lineinfile:
+    line: "RESUME=none"
+    path: /etc/initramfs-tools/conf.d/resume
+    create: yes
+    state: present
+  when: zfsprep_swap|default(false)|bool == true
+
 - shell: "update-initramfs -c -k all"
+
 - name: modify /etc/default/grub
   replace:
     path: /etc/default/grub
@@ -197,6 +172,7 @@
 - name: install grub efi on primary disk
   shell: "grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy"
   when: zfsprep_efi|default(false)|bool == true
+
 #- name: write grub boot sector/setup efi on secondary disks
 #  shell: "dd if={{ zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list | first }} of={{ item.0 }} && efibootmgr -c -g -d {{ item.1 }} -p 3 -L 'ubuntu-{{ item.2 }}' -l '\\EFI\\Ubuntu\\grubx64.efi'"
 #  with_together:
@@ -204,6 +180,7 @@
 #    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>') | list)[1:] }}"
 #    - "{{ zfsprep_root_disks[1:] }}"
 #  when: (zfsprep_efi|default(false)|bool == true) and (zfsprep_root_device_list | length > 1)
+
 - name: ensure zfs.target starts on boot
   systemd:
     name: zfs.target
@@ -217,17 +194,21 @@
 #      comment: "Nagios nologin User"
 #      state: present
 #      become: true
-#- name: Check if user exists
-#  command: getent passwd sa
-#  register: user_on_board
-#  ignore_errors: yes # continue with the playbook
-#- name: Creating user "{{ uusername }}" with admin access
-- name: Creating user sa with admin access
+
+#zfsprep_username: sa
+#zfsprep_userpassword
+- name: Check if user exists
+  command: getent passwd {{ zfsprep_username }}
+  register: user_on_board
+  ignore_errors: yes # continue with the playbook
+
+- name: Creating user "{{ zfsprep_username }}" with admin access
   user: 
-#    name: {{ uusername }}
+
+    name: {{ zfsprep_username }}
+#    password: '$6$vxt55gTEa3g/uPD2$ByOhaKjqaYsK6DN82HGI9p7wuV33b9a7hsmKbr6UcuBiQCYgKRrWFXLfJe9WiqOmRgzisUAluIRmTF27hZogP0'
 #    password: {{ upassword | password_hash('sha512') }}
-    name: sa
-    password: '$6$vxt55gTEa3g/uPD2$ByOhaKjqaYsK6DN82HGI9p7wuV33b9a7hsmKbr6UcuBiQCYgKRrWFXLfJe9WiqOmRgzisUAluIRmTF27hZogP0'
+    password: {{ zfsprep_userpassword }}
     groups: users, sudo    # Empty by default.
 #    groups: admin append=yes
     state: present
@@ -237,23 +218,7 @@
     home: /home/sa         # Defaults to /home/<username>
 #  when:  assigned_role  == "yes"
 #  when: user_on_board.rc == 0
-#- name: install firstboot service
-#  template:
-#    src: firstboot.service.j2
-#    dest: /lib/systemd/system/firstboot.service
-#- name: install firstboot script
-#  template:
-#    src: firstboot.j2
-#    dest: /opt/firstboot
-#    mode: 0777
-#- name: enable firstboot service
-#  systemd:
-#    name: firstboot.service
-#    enabled: yes
-- name: enable systemd-networkd service
-  systemd:
-    name: systemd-networkd
-    enabled: yes
+
 - name: Creates an entry like "@reboot /some/job.sh"
   cron:
     name: "a job for reboot"
