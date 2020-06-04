@@ -195,8 +195,6 @@
 #      state: present
 #      become: true
 
-#zfsprep_username: sa
-#zfsprep_userpassword
 - name: Check if user exists
   command: getent passwd {{ zfsprep_username }}
   register: user_on_board
@@ -205,10 +203,10 @@
 - name: Creating user "{{ zfsprep_username }}" with admin access
   user: 
 
-    name: {{ zfsprep_username }}
+    name: "{{ zfsprep_username }}"
 #    password: '$6$vxt55gTEa3g/uPD2$ByOhaKjqaYsK6DN82HGI9p7wuV33b9a7hsmKbr6UcuBiQCYgKRrWFXLfJe9WiqOmRgzisUAluIRmTF27hZogP0'
-#    password: {{ upassword | password_hash('sha512') }}
-    password: {{ zfsprep_userpassword }}
+#    password: "{{ zfsprep_userpassword | password_hash('sha512') }}"
+    password: "{{ zfsprep_userpassword }}"
     groups: users, sudo    # Empty by default.
 #    groups: admin append=yes
     state: present
