@@ -123,21 +123,21 @@
 #    path: /mnt/var/tmp
 #    mode: 01777
 
-- name: set up zfs data devices
-  shell: "zpool create {{ zfsprep_data_pool_opts | join(' ') }} {{ zfsprep_data_pool }} {{ zfsprep_data_pool_type }} {{ zfsprep_data_device_list }}{{ zfsprep_data_part_append }} -f"
+#- name: set up zfs data devices
+#  shell: "zpool create {{ zfsprep_data_pool_opts | join(' ') }} {{ zfsprep_data_pool }} {{ zfsprep_data_pool_type }} {{ zfsprep_data_device_list }}{{ zfsprep_data_part_append }} -f"
 #  shell: "zpool create {{ zfsprep_data_pool_opts | join(' ') }} {{ zfsprep_data_pool }} {{ zfsprep_data_pool_type }} {{ map('regex_replace', '(.*)', '/dev/mapper/\\g<1>') | list, (zfsprep_data_partitions | ternary((zfsprep_data_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_data_part_append) | list), zfsprep_data_device_list)) | join(' ') }}"
-  when: 
-    - zfsprep_data_disks | default(false) | bool == true
+#  when: 
+#    - zfsprep_data_disks | default(false) | bool == true
 #    - zfs_datapool_state | default('present') == 'present'
 #    - result_datapool_list.rc == 1  
-    - zfsprep_data_disks | length > 0
-- name: create data dataset
-  zfs:
-    name: "{{ zfsprep_data_pool }}/data"
-    state: present
-    extra_zfs_properties:
-      mountpoint: /data
-  when: zfsprep_data_disks | length > 0
+#- name: create data dataset
+#  zfs:
+#    name: "{{ zfsprep_data_pool }}/data"
+#    state: present
+#    extra_zfs_properties:
+#      mountpoint: /data
+#  when:
+#    -  - zfsprep_data_disks | default(false) | bool == true
 #- debug: msg: Partition list "{{  zfsprep_root_device_list }}"
 - name: format and mount {{ zfsprep_installdir }}boot
   shell: "mke2fs -t ext2 {{ item }} && mkdir {{ zfsprep_installdir }}boot && mount {{ item }} {{ zfsprep_installdir }}boot"
@@ -161,9 +161,8 @@
 - name: run debootstrap and set devices=off for root pool
   shell: "debootstrap {{ zfsprep_ubuntu_release }} {{ zfsprep_installdir }} && zfs set devices=off {{ zfsprep_root_pool }}"
 
-- name: set devices=off for data pool
-  shell: "zfs set devices=off {{ zfsprep_data_pool }}"
-  when: zfsprep_data_disks | length > 0
+#- name: set devices=off for data pool
+#  shell: "zfs set devices=off {{ zfsprep_data_pool }}"
 
 - name: write /etc/hostname in chroot
   copy:
