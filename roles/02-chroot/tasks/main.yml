@@ -94,11 +94,12 @@
 #  shell: "echo PARTUUID=$(blkid -s PARTUUID -o value {{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 > /etc/fstab && mount /boot/efi"
 #  when: zfsprep_efi|default(false)|bool == true
 - name: update fstab with /boot volume
-  shell: "echo UUID=$(blkid -s UUID -o value {{ item }}) /boot ext2 defaults 0 2 >> /etc/fstab"
+#  shell: "echo UUID=$(blkid -s UUID -o value {{ item }}) /boot ext2 defaults 0 2 >> /etc/fstab"
+  shell: "echo UUID=$(blkid -s UUID -o value {{ item }}) /boot ext2 noatime,nofail,x-systemd.device-timeout=1 0 1"
   with_items:
-#    - "{{ (zfsprep_root_device_list | length > 1) | ternary('/dev/md0', (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_crypt_part_append) | list).0) }}"
     - "{{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }}"
-#  when: zfsprep_luks|default(false)|bool == true
+#- "{{ (zfsprep_root_device_list | length > 1) | ternary('/dev/md0', (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_crypt_part_append) | list).0) }}"
+# when: zfsprep_luks|default(false)|bool == true
   when: zfsprep_efi|default(false)|bool == true
 - name: update fstab with efi partitions
   shell: "echo UUID=$(blkid -s UUID -o value {{ item }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 >> /etc/fstab"
@@ -144,12 +145,6 @@
 #    name: mdadm
 #    state: latest
 #  when: zfsprep_luks|default(false)|bool == true
-- name: update fstab with backup efi partitions
-  shell: "echo UUID=$(blkid -s UUID -o value {{ item }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 >> /etc/fstab"
-  with_items:
-#    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list)[1:] }}"
-    - "{{ zfsprep_root_device_list }}{{ zfsprep_efi_part_append }}"
-  when: zfsprep_efi|default(false)|bool == true
 #- name: Check if zfs-import-scan.service are deployed
 #  shell: systemctl enable zfs-import-scan.service 
 - name: Start and Enable Airflow
@@ -222,10 +217,10 @@
 #      comment: "Nagios nologin User"
 #      state: present
 #      become: true
-- name: Check if user exists
-  command: getent passwd sa
-  register: user_on_board
-  ignore_errors: yes # continue with the playbook
+#- name: Check if user exists
+#  command: getent passwd sa
+#  register: user_on_board
+#  ignore_errors: yes # continue with the playbook
 #- name: Creating user "{{ uusername }}" with admin access
 - name: Creating user sa with admin access
   user: 
@@ -241,20 +236,20 @@
     createhome: yes        # Defaults to yes
     home: /home/sa         # Defaults to /home/<username>
 #  when:  assigned_role  == "yes"
-  when: user_on_board.rc == 0
-- name: install firstboot service
-  template:
-    src: firstboot.service.j2
-    dest: /lib/systemd/system/firstboot.service
-- name: install firstboot script
-  template:
-    src: firstboot.j2
-    dest: /opt/firstboot
-    mode: 0777
-- name: enable firstboot service
-  systemd:
-    name: firstboot.service
-    enabled: yes
+#  when: user_on_board.rc == 0
+#- name: install firstboot service
+#  template:
+#    src: firstboot.service.j2
+#    dest: /lib/systemd/system/firstboot.service
+#- name: install firstboot script
+#  template:
+#    src: firstboot.j2
+#    dest: /opt/firstboot
+#    mode: 0777
+#- name: enable firstboot service
+#  systemd:
+#    name: firstboot.service
+#    enabled: yes
 - name: enable systemd-networkd service
   systemd:
     name: systemd-networkd

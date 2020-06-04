@@ -12,7 +12,7 @@
       - ssh
       - nano
       - lshw
-      - rsyn
+      - rsync
       - ncdu
       - ethtool
       - wget
@@ -23,10 +23,10 @@
       - net-tools
       - tree
       - htop
-      -  strace
+      - strace
       - p7zip
       - p7zip-full
-      -  p7zip-rar
+      - p7zip-rar
     state: present
 #    name: "{{ item }}"
 #    state: present

@@ -1,9 +1,9 @@
-#- hosts: localhost
-#- hosts: live
-#  vars_files:
-#    - vars.yml
-#  roles:
-#    - role: 01-system-prep
+- hosts: localhost
+- hosts: live
+  vars_files:
+    - vars.yml
+  roles:
+    - role: 01-system-prep
 - hosts: chroot
   gather_facts: no
   tasks:
