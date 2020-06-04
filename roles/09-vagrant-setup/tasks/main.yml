@@ -1,0 +1,45 @@
+---
+- apt:
+    name: [ openssh-client, openssh-server, build-essential, dkms, nfs-common, linux-headers-generic, dkms, build-essential, net-tools ]
+    state: present
+- user:
+    name: vagrant
+    groups: sudo
+    append: yes
+    state: present
+- file:
+    path: /home/vagrant/.ssh
+    state: directory
+    owner: vagrant
+    group: vagrant
+    mode: 0700
+- lineinfile:
+    path: /home/vagrant/.ssh/authorized_keys
+    line: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"
+    create: yes
+- lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%sudo'
+    line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+- shell: mkdir /tmp/vbox && mount -t iso9660 -o loop /root/VBoxGuestAdditions.iso /tmp/vbox && /tmp/vbox/VBoxLinuxAdditions.run --nox11 || true && umount /tmp/vbox && rm -rf vbox /root/VBoxGuestAdditions.iso
+- copy:
+    src: net
+    dest: /etc/initramfs-tools/scripts/local-top/net
+    mode: 0700
+- copy:
+    src: arp
+    dest: /usr/share/initramfs-tools/hooks/arp
+    mode: 0700
+- copy:
+    src: insecure
+    dest: /lib/cryptsetup/scripts/insecure
+    mode: 0700
+- copy:
+    src: gatewaymac
+    dest: /lib/cryptsetup/scripts/gatewaymac
+    mode: 0700
+- shell: sed -i 's#luks,discard,initramfs#luks,keyscript=/lib/cryptsetup/scripts/insecure,discard,initramfs#g' /etc/crypttab && update-initramfs -k all -u
+- shell: /lib/cryptsetup/scripts/gatewaymac > /tmp/key && echo -n "secret" > /tmp/secret && cryptsetup luksAddKey --key-file /tmp/secret /dev/sda1 /tmp/key && cryptsetup luksAddKey --key-file /tmp/secret /dev/sdb /tmp/key && rm -f /tmp/key && rm -f /tmp/secret
+- shell: sed -z -i 's/insecure/gatewaymac/' /etc/crypttab && sync

@@ -1,0 +1,14 @@
+---
+# vars file for netplan-networking
+interfaces:
+  - interface: eth0
+    ipv4:
+      configured: true
+      address: 192.168.100.10/8
+      gateway: 192.168.100.2
+    dns:
+      nameservers:
+      - 192.168.100.2
+      - 8.8.8.8
+      searchdomains
+      - nas.test.local
