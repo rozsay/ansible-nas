@@ -1,4 +1,6 @@
 ---
+zfsprep_username: sa
+zfsprep_userpassword: "$2y$10$1JdBtEi5WePZ7S7LscCvtu26xf/7uVdKywSBDhlEd92TZLun76TnK"  # "vagrant"
 packages:
   - gdisk
   - ansible
@@ -19,6 +21,5 @@ packages:
   - tree
   - htop
   - strace 
-  - p7zip
   - p7zip-full
   - p7zip-rar

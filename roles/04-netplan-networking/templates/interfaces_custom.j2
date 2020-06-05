@@ -1,0 +1,25 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    #######################
+    # Loopback Interfaces #
+    #######################
+    lo:
+      match:
+        name: lo
+{% if openstack_host_loopback_address is defined %}
+      addresses:
+        - {{ openstack_host_loopback_address }}
+{% endif %}
+    #######################
+    # Physical Interfaces #
+    #######################
+{% for port in openstack_hosts_network_interfaces | sort %}
+    {{ port }}:
+{% if openstack_hosts_routing_ospf_unnumbered == true %}
+      addresses:
+        - {{ openstack_host_loopback_address }}
+{% endif %}
+      mtu: {{ openstack_lab_mtu }}
+{% endfor %}

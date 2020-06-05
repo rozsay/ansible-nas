@@ -1,0 +1,9 @@
+---
+- name: install cryptsetup
+  apt:
+    name: cryptsetup
+    install_recommends: no
+    state: present
+- import_tasks: find_disk.yml
+#  when: netplan_enabled
+- import_tasks: disk_dialog.yml

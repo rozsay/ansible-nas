@@ -4,3 +4,5 @@
 127.0.0.1  ansible_connection=local ansible_become=yes
 [chroot]
 /mnt/install/ ansible_connection=chroot ansible_become=yes
+[chrootpost]
+/mnt/install/ ansible_connection=chroot ansible_become=yes

@@ -168,9 +168,9 @@
   copy:
     content: "{{ zfsprep_hostname.short }}"
     dest: "{{ zfsprep_installdir }}etc/hostname"
-- name: write {{ zfsprep_installdir }}apt/sources.list in chroot
+- name: write {{ zfsprep_installdir }}etc/apt/sources.list in chroot
   template:
-    src: etc/apt/sources.j2
+    src: etc_apt_sources.j2
     dest: "{{ zfsprep_installdir }}etc/apt/sources.list"
 - name: add hostname entries to {{ zfsprep_installdir }}hosts in chroot
   lineinfile:

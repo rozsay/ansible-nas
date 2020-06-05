@@ -1,9 +1,9 @@
 - hosts: localhost
-- hosts: live
-  vars_files:
-    - vars.yml
-  roles:
-    - role: 01-system-prep
+#- hosts: live
+#  vars_files:
+#    - vars.yml
+#  roles:
+#    - role: 01-system-prep
 - hosts: chroot
   gather_facts: no
   tasks:
@@ -13,14 +13,35 @@
   vars_files:
     - vars.yml
   roles:
-    - role: 02-chroot
-    - role: 03-post-setup
+#    - role: 02-chroot
+#    - role: 03-post-setup
+#     - role: 04-netplan-networking
+    - role: 05-environment
 #    - role: 05-post-docker
 #    - role: 06-post-kodi
-- hosts: chroot
+#- hosts: chroot
 #  vars_files:
 #    - vars.yml
 #  roles:
+#    - role: 03-post-setup
 #    - role: 04-netplan-networking 
 #    - role: 05-post-docker
 #    - role: 06-post-kodi
+  vars_prompt:
+    - name: "user_password"
+      prompt: "Enter User Password"
+      default: "user"
+      private: yes
+      confirm: yes
+#    - name: "disk_name" ## Which disk we are using to create a partition for a logical volume. eg(/dev/sdb,/dev/sdc)
+#      prompt: "Disk used for creating partition"
+#      default: "sdc"
+#      private: no
+#    - name: "file_system" ## What type of filesystem it can be ext3, ext4 or xfs etc.
+#      prompt: "Type of file system required?"
+#      default: "ext4"
+#      private: no
+#    - name: "mount_point" ## In what name mount point should be created.
+#      prompt: "Where need to mount?"
+#      default: "mnt/data1500"
+#      private: no

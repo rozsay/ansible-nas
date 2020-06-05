@@ -15,3 +15,7 @@ zfsprep_data_pool_type: ""
 zfsprep_legacy_device_nodes: false
 zfsprep_timezone: "Europe/Budapest"
 ansible_python_interpreter: /usr/bin/python3
+
+disk_additional_disks: []
+disk_package_use: auto
+additional_fs_utils: []
