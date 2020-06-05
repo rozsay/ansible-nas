@@ -2,36 +2,35 @@
 - name: Create kodi config dir
   file:
     state: directory
-    path: /home/{{ kodi_sysuser }}/.kodi/userdata/
-    owner: "{{ kodi_sysuser }}"
-    group: "{{ kodi_sysgroup }}"
+    path: /home/{{ user_name }}/.kodi/userdata/
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
   become: yes
 
 - name: Drop Kodi sources.xml
   template:
     src: sources.xml.j2
-    dest: /home/{{ kodi_sysuser }}/.kodi/userdata/sources.xml
-    owner: "{{ kodi_sysuser }}"
-    group: "{{ kodi_sysgroup }}"
+    dest: /home/{{ user_name }}/.kodi/userdata/sources.xml
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
   become: yes
 
 - name: Drop avancedsettings.xml
   template:
     src: advancedsettings.xml.j2
-    dest: /home/{{ kodi_sysuser }}/.kodi/userdata/advancedsettings.xml
-    owner: "{{ kodi_sysuser }}"
-    group: "{{ kodi_sysgroup }}"
+    dest: /home/{{ user_name }}/.kodi/userdata/advancedsettings.xml
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
   become: yes
   when: kodi_usemysql
 
 - name: Drop guisettings.xml
   template:
     src: guisettings.xml.j2
-    dest: /home/{{ kodi_sysuser }}/.kodi/userdata/guisettings.xml
-    owner: "{{ kodi_sysuser }}"
-    group: "{{ kodi_sysgroup }}"
+    dest: /home/{{ user_name }}/.kodi/userdata/guisettings.xml
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
   become: yes
-
 - name: create kodi.service for the user session
   template:
     src: 'kodi.service.j2'
@@ -39,12 +38,13 @@
     mode: 0644
     owner: root
     group: root
-- name: start kodi.service
-  sudo: yes
-  service:
-    name: kodi.service
-    state: started
-    use: service
+
+#- name: start kodi.service
+#  sudo: yes
+#  service:
+#    name: kodi.service
+#    state: started
+#    use: service
 - name: enable service kodi
   systemd:
     name: kodi.service

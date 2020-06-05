@@ -12,38 +12,21 @@
 - hosts: chroot
   vars_files:
     - vars.yml
-  roles:
-#    - role: 02-chroot
-#    - role: 03-post-setup
-#     - role: 04-netplan-networking
-    - role: 05-environment
-# - role: 06-services
-#    - role: 07-kodi
-#    - role: 07-post-docker
-#    - role: 05-post-kodi
-#- hosts: chroot
-#  vars_files:
-#    - vars.yml
-#  roles:
-#    - role: 03-post-setup
-#    - role: 04-netplan-networking 
-#    - role: 05-post-docker
-#    - role: 06-post-kodi
   vars_prompt:
     - name: "user_name"
       prompt: "Enter User Name"
-      default: "user"
+      default: "sa"
       private: yes
 #      confirm: yes
     - name: "user_password"
       prompt: "Enter User Password"
-      default: "password"
+      default: "sa"
       encrypt: "sha512_crypt"
       private: yes
       confirm: yes
     - name: "kodi_name"
       prompt: "Enter Kodi User Name"
-      default: "user"
+      default: "kodi"
       private: yes
 #    - name: "disk_name" ## Which disk we are using to create a partition for a logical volume. eg(/dev/sdb,/dev/sdc)
 #      prompt: "Disk used for creating partition"
@@ -57,3 +40,20 @@
 #      prompt: "Where need to mount?"
 #      default: "mnt/data1500"
 #      private: no
+  roles:
+#    - role: 02-chroot
+#    - role: 03-post-setup
+#    - role: 04-netplan-networking
+#    - role: 05-environment
+#     - role: 06-kodi
+    - role: 07-services
+#    - role: 07-post-docker
+#    - role: 05-post-kodi
+#- hosts: chroot
+#  vars_files:
+#    - vars.yml
+#  roles:
+#    - role: 03-post-setup
+#    - role: 04-netplan-networking 
+#    - role: 05-post-docker
+#    - role: 06-post-kodi
