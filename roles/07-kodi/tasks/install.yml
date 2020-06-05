@@ -9,7 +9,12 @@
 - name: apt | install kodi packages
   apt:
     name:
+      - xauth
       - xorg
+      - xinit
+      - xserver-xorg-core
+      - xserver-xorg
+      - xserver-common
       - xserver-xorg-legacy
       - dbus-x11
       - alsa-utils

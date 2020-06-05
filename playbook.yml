@@ -34,13 +34,17 @@
       prompt: "Enter User Name"
       default: "user"
       private: yes
-      confirm: yes
+#      confirm: yes
     - name: "user_password"
       prompt: "Enter User Password"
       default: "password"
       encrypt: "sha512_crypt"
       private: yes
       confirm: yes
+    - name: "kodi_name"
+      prompt: "Enter Kodi User Name"
+      default: "user"
+      private: yes
 #    - name: "disk_name" ## Which disk we are using to create a partition for a logical volume. eg(/dev/sdb,/dev/sdc)
 #      prompt: "Disk used for creating partition"
 #      default: "sdc"

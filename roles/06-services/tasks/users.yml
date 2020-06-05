@@ -1,19 +1,29 @@
 ---
 - name: Users | Create Super User
   user:
-    name: "{{ username }}"
-    password: "{{ password }}"
+    name: "{{ user_name }}"
+    password: "{{ user_pasword }}"
     groups: sudo
     append: yes
     shell: /bin/bash
 
 - name: Users | Add Super User Authorized Key
   authorized_key:
-    user: "{{ username }}"
-    key: "{{ lookup('file', 'id_rsa.pub') }}"
+    user: "{{ user_name }}"
+#    key: "{{ lookup('file', 'id_rsa.pub') }}"
     state: present
 
 - name: Users | Enable passwordless sudo
   copy:
-    content: "{{ username }} ALL=(ALL) NOPASSWD:ALL"
-    dest: "/etc/sudoers.d/99-{{ username }}"
+    content: "{{ user_name }} ALL=(ALL) NOPASSWD:ALL"
+    dest: "/etc/sudoers.d/99-{{ user_name }}"
+
+- name: Users | Create Super User
+  user:
+    name: "{{ kodi_name }}"
+    groups: kodi, audio, video, network, optical
+    shell: /sbin/nologin
+    append: yes
+    comment: "Kodi nologin User"
+    state: present
+  become: true
