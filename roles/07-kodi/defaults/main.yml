@@ -1,0 +1,46 @@
+---
+# defaults file for synehan.kodi
+# System user
+kodi_sysuser: kodi
+kodi_sysgroup: kodi
+
+# Package type (stable, unstable or nightly)
+kodi_ppa_use: stable
+
+kodi_cleanup_old_install: false
+
+# Gui Settings
+kodi_webserver_enable: true
+
+kodi_webserver_username: kodi
+kodi_webserver_password: kodi
+kodi_webserver_port: 8080
+
+kodi_zeroconf_enable: false
+kodi_upnpserver_enable: true
+
+kodi_videolibrary_updateonstartup: true
+kodi_musiclibrary_updateonstartup: true
+
+kodi_audiooutput_passthroughdevice: ALSA:iec958:CARD=MID,DEV=0
+
+kodi_addons_unknownsource_enable: true
+
+kodi_smb_winserver: ""
+kodi_smb_workgroup: "WORKGROUP"
+
+# Mysql Settings
+kodi_usemysql: false
+
+kodi_mysql:
+  host: localhost
+  port: 3306
+  user: kodi
+  pass: changeme
+
+# Source settings
+kodi_sources_video: []
+kodi_sources_music: []
+kodi_sources_programs: []
+kodi_sources_files: []
+kodi_sources_pictures: []

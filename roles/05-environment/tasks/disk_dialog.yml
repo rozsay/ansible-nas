@@ -1,31 +1,68 @@
-#vars_prompt:
-- name: Mount the data1500 filesystem
-#  remote_user: ansible
-  become: yes
-  become_method: sudo
-  mount:
-    path: "{{ /mnt/data1500 }}" ## Mount point where to mount the FS.
-    fstype: ext4
-    src: "/dev/sdc" ## Full related path of device mapper to be mounted under mount point.
-    opts: rw,noatime,noexec,nodev,nosuid ## Mount options
-    state: mounted
-- name: Mount the data2000 filesystem
-#  remote_user: ansible
-  become: yes
-  become_method: sudo
-  mount:
-    path: "{{ /mnt/data2000 }}" ## Mount point where to mount the FS.
-    fstype: ext4
-    src: "/dev/sdd" ## Full related path of device mapper to be mounted under mount point.
-    opts: rw,noatime,noexec,nodev,nosuid ## Mount options
-    state: mounted
-- name: Mount the data3000 filesystem
-#  remote_user: ansible
-  become: yes
-  become_method: sudo
-  mount:
-    path: "{{ /mnt/data3000 }}" ## Mount point where to mount the FS.
-    fstype: ext4
-    src: "/dev/sde" ## Full related path of device mapper to be mounted under mount point.
-    opts: rw,noatime,noexec,nodev,nosuid ## Mount options
-    state: mounted
+---
+- name: data1500 check directory.
+  stat:
+    path: /mnt/data1500
+  register: my_data1500
+- name: "echo if directory already existed"
+  debug:
+    msg: "the /mnt/data1500 is already existed"
+  when: my_data1500.stat.exists
+ 
+- name: "Ansible Create directory if not exists"
+  file:
+    path: /mnt/data1500
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+  when: my_data1500.stat.exists == false
+
+- name: Mounts data1500
+  shell: "mount /dev/sdc1 /mnt/data1500"
+  ignore_errors: yes
+
+- name: data2000 check directory.
+  stat:
+    path: /mnt/data2000
+  register: my_data2000
+- name: "echo if directory already existed"
+  debug:
+    msg: "the /mnt/data2000 is already existed"
+  when: my_data2000.stat.exists
+
+- name: "Ansible Create directory if not exists"
+  file:
+    path: /mnt/data2000
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+  when: my_data2000.stat.exists == false
+
+- name: Mounts data2000
+  shell: "mount /dev/sdd1 /mnt/data2000"
+
+
+
+
+
+- name: data3000 check directory.
+  stat:
+    path: /mnt/data3000
+  register: my_data3000
+- name: "echo if directory already existed"
+  debug:
+    msg: "the /mnt/data3000 is already existed"
+  when: my_data3000.stat.exists
+
+- name: "Ansible Create directory if not exists"
+  file:
+    path: /mnt/data3000
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+  when: my_data3000.stat.exists == false
+
+- name: Mounts data3000
+  shell: "mount /dev/sdd1 /mnt/data3000"
