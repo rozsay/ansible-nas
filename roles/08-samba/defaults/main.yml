@@ -14,7 +14,7 @@ samba_printer_type: 'cups'
 samba_cups_server: 'localhost:631'
 samba_load_homes: false
 samba_create_varwww_symlinks: false
-samba_shares_root: '/srv/shares'
+samba_shares_root: '/mnt'
 #samba_shares: []
 samba_shares:
   - name: torrents
@@ -40,8 +40,8 @@ samba_shares:
 
 #samba_users: []
 samba_users:
-  - name: {{ user_name }}
-    password: {{ user_password }}
+  - name: " {{ user_name }} "
+    password: " {{ user_password }} "
 samba_wins_support: 'yes'
 samba_local_master: 'yes'
 samba_domain_master: 'yes'
