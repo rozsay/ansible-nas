@@ -1,4 +1,6 @@
 ---
+- import_tasks: sshd_server.yml
+  when: sshd_enabled
 #- name: Add user nagios
 #    user:
 #      name: nagios
@@ -10,24 +12,24 @@
 #      become: true
 
 - name: Check if user exists
-  command: getent passwd {{ zfsprep_username }}
+  command: getent passwd {{ user_name }}
   register: user_on_board
   ignore_errors: yes # continue with the playbook
 
-- name: Creating user "{{ zfsprep_username }}" with admin access
+- name: Creating user "{{ user_name }}" with admin access
   user:
 
-    name: "{{ zfsprep_username }}"
+    name: "{{ user_name }}"
 #    password: '$6$vxt55gTEa3g/uPD2$ByOhaKjqaYsK6DN82HGI9p7wuV33b9a7hsmKbr6UcuBiQCYgKRrWFXLfJe9WiqOmRgzisUAluIRmTF27hZogP0'
-#    password: "{{ zfsprep_userpassword | password_hash('sha512') }}"
-    password: "{{ zfsprep_userpassword }}"
+#    password: "{{ user_password | password_hash('sha512') }}"
+    password: "{{ user_password  | password_hash('sha512') }}"
     groups: users, sudo    # Empty by default.
 #    groups: admin append=yes
     state: present
     shell: /bin/bash       # Defaults to /bin/bash
     system: no             # Defaults to no system: Set this to "yes" to make it a system user. No shell or home directory will be made u>
     createhome: yes        # Defaults to yes
-    home: /home/sa         # Defaults to /home/<username>
+    home: /home/{{ user_name }}         # Defaults to /home/<username>
 #  when:  assigned_role  == "yes"
 #  when: user_on_board.rc == 0
 
@@ -64,41 +66,7 @@
 #    state: present
 #  with_items:
 #    - "{{ packages }}"
-#- name: explicitly write nocompress to /etc/logrotate.conf
-#  replace:
-#    path: /etc/logrotate.conf
-#    regexp: '^.*compress$'
-#    replace: 'nocompress'
-#- name: find files in /etc/logrotate.d
-#  find:
-#    paths: /etc/logrotate.d
-#    file_type: file
-#  register: zfsprep_logrotate_jobs
-#- name: comment all compress from logrotate.conf
-#  replace:
-#    path: "{{ item.path }}"
-#    regexp: '^(.*compress.*)$'
-#    replace: '#\1'
-#  with_items: "{{ zfsprep_logrotate_jobs.files }}"
-#- name: Create a snapshot of rpool/root file system.
-#  zfs:
-#    name: "{{ zfsprep_root_pool }}/root@{{ ansible_date_time.date }}install"
-#    state: present
-# Cleanup
-#- name: Unmount All Directories
-#  mount:
-#    name: "{{ item.name }}"
-#    state: unmounted
-#    fstype: none
-#    src: none
-#  become: True
-#  with_items:
-#   - '/mnt/install/dev'
-#   - '/mnt/install/proc'
-#   - '/mnt/install/sys'
-#   - '/mnt/install/boot/efi'
-#   - '/mnt/install/boot'
-#   - '/mnt/install/home'
-#   - '/mnt/install'
-#- name: export all zpool
-#  shell: zpool export -a
+#    register: apt_out
+
+#- debug: var=apt_out
+#- debug: var={{ apt_out.stdout.split('\n')[:-1] }}
