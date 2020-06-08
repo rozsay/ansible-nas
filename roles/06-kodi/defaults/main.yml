@@ -4,7 +4,7 @@
 # libasound2-plugins alsa-utils libbluray-bdj firmware-crystalhd libfftw3-bin libfftw3-dev alsa-base glew-utils opus-tools pulseaudio speex
 # Recommended packages:
 # kodi-visualization-spectrum libcec4 libmodplug1 libnfs8 libplist3 udisks2 libaacs0 libgl1-mesa-dri javascript-common va-driver-all | va-driver vdpau-driver-all | vdpau-driver
-kodi__base_packages:
+kodi_base_packages:
   - 'kodi'
   - 'xorg'
   - 'xserver-xorg'
@@ -23,12 +23,13 @@ kodi__base_packages:
 
 # System user and group
 kodi_sysuser: 'kodi'
+kodi_sysuser_home_path: '/home/kodi'
 kodi_sysgroup: 'kodi'
 # The default shell set on the Kodi account.
 kodi_shell: '/usr/sbin/nologin'
 
 # List of additional system groups of the system UNIX account.
-kodi__groups:
+kodi_groups:
   - 'cdrom'
   - 'floppy'
   - 'audio'
@@ -36,7 +37,7 @@ kodi__groups:
   - 'plugdev'
 
 # Contents of the GECOS field set for the Kodi account.
-kodi__gecos: 'kodi.org'
+kodi_gecos: 'kodi.org'
 
 # Gui Settings
 kodi_webserver_enable: true

@@ -28,10 +28,15 @@
       prompt: "SSH server port?"
       default: "22"
       private: no
-    - name: "kodi_name"
-      prompt: "Enter Kodi User Name"
+    - name: "kodi_webserver_password"
+      prompt: "Enter Kodi web passwod"
       default: "kodi"
       private: yes
+    - name: "transmission_password"
+      prompt: "Enter transmission passwod"
+      default: "password"
+      private: yes
+
 #    - name: "disk_name" ## Which disk we are using to create a partition for a logical volume. eg(/dev/sdb,/dev/sdc)
 #      prompt: "Disk used for creating partition"
 #      default: "sdc"
@@ -46,10 +51,10 @@
 #      private: no
   roles:
 #    - role: 02-chroot
-    - role: 03-post-setup
+#    - role: 03-post-setup
 #    - role: 04-netplan-networking
 #    - role: 05-environment
-#    - role: 06-kodi
+    - role: 06-kodi
 #    - role: 07-services
 #    - role: 08-samba
 #    - role: 081-transmission

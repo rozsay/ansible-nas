@@ -6,6 +6,7 @@
     state: "present"
     install_recommends: False
   notify: ["Test and restart SSHD"]
+  ignore_errors: true
 
 - name: Ensure Ed25519 host key is present
   command: ssh-keygen -q -t ed25519 -N "" -f ssh_host_ed25519_key

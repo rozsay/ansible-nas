@@ -1,37 +1,7 @@
 ---
 - import_tasks: sshd_server.yml
   when: sshd_enabled
-#- name: Add user nagios
-#    user:
-#      name: nagios
-#      groups: nagios
-#      shell: /sbin/nologin
-#      append: yes
-#      comment: "Nagios nologin User"
-#      state: present
-#      become: true
-
-- name: Check if user exists
-  command: getent passwd {{ user_name }}
-  register: user_on_board
-  ignore_errors: yes # continue with the playbook
-
-- name: Creating user "{{ user_name }}" with admin access
-  user:
-
-    name: "{{ user_name }}"
-#    password: '$6$vxt55gTEa3g/uPD2$ByOhaKjqaYsK6DN82HGI9p7wuV33b9a7hsmKbr6UcuBiQCYgKRrWFXLfJe9WiqOmRgzisUAluIRmTF27hZogP0'
-#    password: "{{ user_password | password_hash('sha512') }}"
-    password: "{{ user_password  | password_hash('sha512') }}"
-    groups: users, sudo    # Empty by default.
-#    groups: admin append=yes
-    state: present
-    shell: /bin/bash       # Defaults to /bin/bash
-    system: no             # Defaults to no system: Set this to "yes" to make it a system user. No shell or home directory will be made u>
-    createhome: yes        # Defaults to yes
-    home: /home/{{ user_name }}         # Defaults to /home/<username>
-#  when:  assigned_role  == "yes"
-#  when: user_on_board.rc == 0
+- include: users.yml
 
 - apt:
     name: software-properties-common

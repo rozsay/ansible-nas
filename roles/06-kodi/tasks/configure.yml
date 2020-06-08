@@ -2,34 +2,34 @@
 - name: Create kodi config dir
   file:
     state: directory
-    path: /home/{{ user_name }}/.kodi/userdata/
-    owner: "{{ user_name }}"
-    group: "{{ user_name }}"
+    path: /home/{{ kodi_sysuser }}/.kodi/userdata/
+    owner: "{{ kodi_sysuser }}"
+    group: "{{ kodi_sysgroup }}"
   become: yes
 
 - name: Drop Kodi sources.xml
   template:
     src: sources.xml.j2
-    dest: /home/{{ user_name }}/.kodi/userdata/sources.xml
-    owner: "{{ user_name }}"
-    group: "{{ user_name }}"
+    dest: /home/{{ kodi_sysuser }}/.kodi/userdata/sources.xml
+    owner: "{{ kodi_sysuser }}"
+    group: "{{ kodi_sysgroup }}"
   become: yes
 
 - name: Drop avancedsettings.xml
   template:
     src: advancedsettings.xml.j2
-    dest: /home/{{ user_name }}/.kodi/userdata/advancedsettings.xml
-    owner: "{{ user_name }}"
-    group: "{{ user_name }}"
+    dest: /home/{{ kodi_sysuser }}/.kodi/userdata/advancedsettings.xml
+    owner: "{{ kodi_sysuser }}"
+    group: "{{ kodi_sysgroup }}"
   become: yes
   when: kodi_usemysql
 
 - name: Drop guisettings.xml
   template:
     src: guisettings.xml.j2
-    dest: /home/{{ user_name }}/.kodi/userdata/guisettings.xml
-    owner: "{{ user_name }}"
-    group: "{{ user_name }}"
+    dest: /home/{{ kodi_sysuser }}/.kodi/userdata/guisettings.xml
+    owner: "{{ kodi_sysuser }}"
+    group: "{{ kodi_sysgroup }}"
   become: yes
 - name: create kodi.service for the user session
   template:

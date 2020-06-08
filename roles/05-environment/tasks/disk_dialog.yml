@@ -17,11 +17,11 @@
     owner: root
   when: my_data1500.stat.exists == false
 
-- name: Create a ext4 filesystem on /dev/sdc1 and check disk blocks
-  filesystem:
-    fstype: ext4
-    dev: /dev/sdc1
-    opts: -cc
+#- name: Create a ext4 filesystem on /dev/sdc1 and check disk blocks
+#  filesystem:
+#    fstype: ext4
+#    dev: /dev/sdc1
+#    opts: -cc
 
 - name: Mounts data1500
   mount:
@@ -51,11 +51,11 @@
     owner: root
   when: my_data2000.stat.exists == false
 
-- name: Create a ext4 filesystem on /dev/sdb1 and check disk blocks
-  filesystem:
-    fstype: ext4
-    dev: /dev/sdb1
-    opts: -cc
+#- name: Create a ext4 filesystem on /dev/sdb1 and check disk blocks
+#  filesystem:
+#    fstype: ext4
+#    dev: /dev/sdb1
+#    opts: -cc
 
 - name: Mounts data2000
   mount:
@@ -85,11 +85,11 @@
     owner: root
   when: my_data2000new.stat.exists == false
 
-- name: Create a ext4 filesystem on /dev/sdd1 and check disk blocks
-  filesystem:
-    fstype: ext4
-    dev: /dev/sdd1
-    opts: -cc
+#- name: Create a ext4 filesystem on /dev/sdd1 and check disk blocks
+#  filesystem:
+#    fstype: ext4
+#    dev: /dev/sdd1
+#    opts: -cc
 
 - name: Mounts data2000-new
   mount:
