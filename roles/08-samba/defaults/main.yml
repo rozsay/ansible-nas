@@ -20,6 +20,8 @@ samba_shares:
   - name: torrents
     comment: 'A place for pirates to hang out'
     path: /mnt/data2000-new/torrents/
+    group: users
+    owner: "{{ user_name }}"
     guest_ok: 'yes'
     browseable: 'yes'
   - name: data1500

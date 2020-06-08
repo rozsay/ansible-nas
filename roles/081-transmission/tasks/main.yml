@@ -27,7 +27,8 @@
     path: "{{ transmission_download_dir }}"
     owner: "{{ transmission_user }}"
     group: "{{ transmission_group }}"
-    mode: 0775
+    mode: 777
+  ignore_errors: true
   tags: transmission
 
 - name: Add watch dir

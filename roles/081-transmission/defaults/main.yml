@@ -1,7 +1,7 @@
 ---
 transmission_user: " {{ user_name }}"
 transmission_group: "debian-transmission"
-transmission_password: Sasasa26
+transmission_password: "{{ transmission_password }}"
 transmission_url: '/transmission/'
 
 transmission_rpc_auth_enabled: true

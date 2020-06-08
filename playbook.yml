@@ -54,10 +54,14 @@
 #    - role: 03-post-setup
 #    - role: 04-netplan-networking
 #    - role: 05-environment
-    - role: 06-kodi
+#    - role: 06-kodi
 #    - role: 07-services
 #    - role: 08-samba
-#    - role: 081-transmission
+    - role: 081-transmission
+    - role: geerlingguy.docker
+      tags:
+        - docker
+        - skip_ansible_lint
 #    - role: 07-post-docker
 #    - role: 99-end
 #- hosts: chroot
