@@ -17,10 +17,22 @@
     owner: root
   when: my_data1500.stat.exists == false
 
+- name: Create a ext4 filesystem on /dev/sdc1 and check disk blocks
+  filesystem:
+    fstype: ext4
+    dev: /dev/sdc1
+    opts: -cc
+
 - name: Mounts data1500
-  shell: "mount /dev/sdc1 /mnt/data1500"
+  mount:
+    name: /mnt/data1500
+    src: /dev/sdc1
+    fstype: ext4
+    state: mounted
+  become: true
   ignore_errors: yes
 
+#############################################################
 - name: data2000 check directory.
   stat:
     path: /mnt/data2000
@@ -39,30 +51,53 @@
     owner: root
   when: my_data2000.stat.exists == false
 
+- name: Create a ext4 filesystem on /dev/sdb1 and check disk blocks
+  filesystem:
+    fstype: ext4
+    dev: /dev/sdb1
+    opts: -cc
+
 - name: Mounts data2000
-  shell: "mount /dev/sdd1 /mnt/data2000"
+  mount:
+    name: /mnt/data2000
+    src: /dev/sdb1
+    fstype: ext4
+    state: mounted
+  become: true
+  ignore_errors: yes
 
-
-
-
-
-- name: data3000 check directory.
+#############################################################
+- name: data2000new check directory.
   stat:
-    path: /mnt/data3000
-  register: my_data3000
+    path: /mnt/data2000-new
+  register: my_data2000new
 - name: "echo if directory already existed"
   debug:
-    msg: "the /mnt/data3000 is already existed"
-  when: my_data3000.stat.exists
+    msg: "the /mnt/data2000-new is already existed"
+  when: my_data2000new.stat.exists
 
 - name: "Ansible Create directory if not exists"
   file:
-    path: /mnt/data3000
+    path: /mnt/data2000-new
     state: directory
     mode: 0755
     group: root
     owner: root
-  when: my_data3000.stat.exists == false
+  when: my_data2000new.stat.exists == false
 
-- name: Mounts data3000
-  shell: "mount /dev/sdd1 /mnt/data3000"
+- name: Create a ext4 filesystem on /dev/sdd1 and check disk blocks
+  filesystem:
+    fstype: ext4
+    dev: /dev/sdd1
+    opts: -cc
+
+- name: Mounts data2000-new
+  mount:
+    name: /mnt/data2000-new
+    src: /dev/sdd1
+    fstype: ext4
+    state: mounted
+  become: true
+  ignore_errors: yes
+
+#############################################################
