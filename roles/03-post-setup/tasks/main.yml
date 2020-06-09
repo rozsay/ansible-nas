@@ -6,45 +6,24 @@
 - apt:
     name: software-properties-common
     state: present
-- shell: add-apt-repository universe
-- apt:
-    name:
-      - gdisk
-      - ansible
-      - openssh-server
-      - mc
-      - ssh
-      - nano
-      - lshw
-      - rsync
-      - ncdu
-      - ethtool
-      - wget
-      - git
-      - gpart
-      - gparted
-      - ssh-askpass
-      - net-tools
-      - tree
-      - htop
-      - strace
-      - p7zip
-      - p7zip-full
-      - p7zip-rar
-    state: present
-#    name: "{{ item }}"
-#    state: present
-#  with_items:
-#    - "{{ packages }}"
-#    register: apt_out
 
-#- debug: var=apt_out
-#- debug: var={{ apt_out.stdout.split('\n')[:-1] }}
-- name: Create a snapshot of rpool/root file system.
+- shell: add-apt-repository universe
+
+- name: Ensure specified packages are in there desired state
+  package:
+    name: '{{ item }}'
+    state: present
+  with_flattened: '{{ default_packages }}'
+#  tags: [ 'role::kodi:pkgs' ]
+#  register: is_softneedinstalled
+#  become: yes
+  become: true
+
+- name: Create a snapshot of rpool-root file system.
   zfs:
     name: "{{ zfsprep_root_pool }}/root@{{ ansible_date_time.date }}install"
     state: present
- Cleanup
+# Cleanup
 - name: Unmount All Directories
   mount:
     name: "{{ item.name }}"

@@ -37,9 +37,4 @@ zfsprep_root_password_hash: "$2y$10$1JdBtEi5WePZ7S7LscCvtu26xf/7uVdKywSBDhlEd92T
 debug:
   msg: "zfsprep_root_disks_by_id:  {{ zfsprep_root_disks_by_id }} "
 debug:
-  msg: "zfsprep_data_disks_by_id: {{ zfsprep_data_disks_by_id }} "
-
-debug:
-  msg: "zfsprep_root_device_list:  {{ zfsprep_root_device_list }} "
-debug:
   msg: "zfsprep_data_device_list:  {{ zfsprep_data_device_list }} "
