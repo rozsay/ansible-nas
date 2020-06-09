@@ -1,14 +1,14 @@
 - hosts: localhost
-#- hosts: live
-#  vars_files:
-#    - vars.yml
-#  roles:
-#    - role: 01-system-prep
-#- hosts: chroot
-#  gather_facts: no
-#  tasks:
-#    - name: make sure python is installed in our chroot
-#      raw: "apt-get update && apt-get -y install python3 python-apt"
+- hosts: live
+  vars_files:
+    - vars.yml
+  roles:
+    - role: 01-system-prep
+- hosts: chroot
+  gather_facts: no
+  tasks:
+    - name: make sure python is installed in our chroot
+      raw: "apt-get update && apt-get -y install python3 python-apt"
 - hosts: chroot
   vars_files:
     - vars.yml
@@ -50,18 +50,18 @@
 #      default: "mnt/data1500"
 #      private: no
   roles:
-#    - role: 02-chroot
-#    - role: 03-post-setup
+    - role: 02-chroot
+    - role: 03-post-setup
 #    - role: 04-netplan-networking
 #    - role: 05-environment
 #    - role: 06-kodi
 #    - role: 07-services
 #    - role: 08-samba
-    - role: 081-transmission
-    - role: geerlingguy.docker
-      tags:
-        - docker
-        - skip_ansible_lint
+#    - role: 081-transmission
+#    - role: geerlingguy.docker
+#      tags:
+#        - docker
+#        - skip_ansible_lint
 #    - role: 07-post-docker
 #    - role: 99-end
 #- hosts: chroot
