@@ -1,0 +1,103 @@
+---
+- name: data1500 check directory.
+  stat:
+    path: /mnt/data1500
+  register: my_data1500
+- name: "echo if directory already existed"
+  debug:
+    msg: "the /mnt/data1500 is already existed"
+  when: my_data1500.stat.exists
+ 
+- name: "Ansible Create directory if not exists"
+  file:
+    path: /mnt/data1500
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+  when: my_data1500.stat.exists == false
+
+#- name: Create a ext4 filesystem on /dev/sdc1 and check disk blocks
+#  filesystem:
+#    fstype: ext4
+#    dev: /dev/sdc1
+#    opts: -cc
+
+- name: Mounts data1500
+  mount:
+    name: /mnt/data1500
+    src: /dev/sdc1
+    fstype: ext4
+    state: mounted
+  become: true
+  ignore_errors: yes
+
+#############################################################
+- name: data2000 check directory.
+  stat:
+    path: /mnt/data2000
+  register: my_data2000
+- name: "echo if directory already existed"
+  debug:
+    msg: "the /mnt/data2000 is already existed"
+  when: my_data2000.stat.exists
+
+- name: "Ansible Create directory if not exists"
+  file:
+    path: /mnt/data2000
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+  when: my_data2000.stat.exists == false
+
+#- name: Create a ext4 filesystem on /dev/sdb1 and check disk blocks
+#  filesystem:
+#    fstype: ext4
+#    dev: /dev/sdb1
+#    opts: -cc
+
+- name: Mounts data2000
+  mount:
+    name: /mnt/data2000
+    src: /dev/sdb1
+    fstype: ext4
+    state: mounted
+  become: true
+  ignore_errors: yes
+
+#############################################################
+- name: data2000new check directory.
+  stat:
+    path: /mnt/data2000-new
+  register: my_data2000new
+- name: "echo if directory already existed"
+  debug:
+    msg: "the /mnt/data2000-new is already existed"
+  when: my_data2000new.stat.exists
+
+- name: "Ansible Create directory if not exists"
+  file:
+    path: /mnt/data2000-new
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+  when: my_data2000new.stat.exists == false
+
+#- name: Create a ext4 filesystem on /dev/sdd1 and check disk blocks
+#  filesystem:
+#    fstype: ext4
+#    dev: /dev/sdd1
+#    opts: -cc
+
+- name: Mounts data2000-new
+  mount:
+    name: /mnt/data2000-new
+    src: /dev/sdd1
+    fstype: ext4
+    state: mounted
+  become: true
+  ignore_errors: yes
+
+#############################################################

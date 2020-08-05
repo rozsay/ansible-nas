@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  author: Òscar Casajuana
+  description: Transmission for debian based systems
+  license: MIT
+  min_ansible_version: 1.4
+  platforms:
+    - name: Ubuntu
+      versions:
+        - xenial
+        - disco
+        - cosmic
+        - bionic
+    - name: Debian
+      versions:
+        - jessie
+        - stretch
+        - buster
+  categories:
+    - networking
+dependencies: []

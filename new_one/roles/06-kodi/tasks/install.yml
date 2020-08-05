@@ -1,0 +1,91 @@
+---
+- name: Install Software Properties Common
+  apt:
+    pkg: software-properties-common
+#    update_cache: true
+    state: present
+#  register:  is_softpropinstalled
+  become: yes
+
+- name: Ensure specified packages are in there desired state
+  package:
+    name: '{{ item }}'
+    state: present
+  with_flattened: '{{ kodi_base_packages }}'
+  tags: [ 'role::kodi:pkgs' ]
+  register: is_softneedinstalled
+#  become: yes
+  become: true
+
+#- name: apt | install kodi packages
+#  apt:
+#    name:
+#      - xauth
+#      - xorg
+#      - xinit
+#      - xserver-xorg-core
+#      - xserver-xorg
+#      - xserver-common
+#      - xserver-xorg-legacy
+#      - dbus-x11
+#      - alsa-utils
+#    state: present
+#    update_cache: true
+#    cache_valid_time: 3600
+#  register:  softneedinstalled
+#  become: yes
+#  become: true
+#  register: apt_out
+#- debug: var=apt_out
+
+- name: Add Kodi Repository
+  apt_repository:
+    repo: "ppa:team-xbmc/ppa"
+    state: present
+    update_cache: true
+#    cache_valid_time: 3600
+#  when: is_softpropinstalled
+  register: is_ppakodi
+#  become: yes
+  become: true
+
+- name: Install kodi
+  apt:
+    pkg: kodi
+    state: latest
+#    update_cache: true
+#  when: is_ppakodi and is_softneedinstalled
+  register: is_kodiinstalled
+#  become: yes
+  become: true
+
+# System user and group [[[
+- name: Create Kodi system group
+  group:
+    name: '{{ kodi_sysgroup }}'
+    state: present
+    system: True
+#  when: is_kodiinstalled
+
+- name: Create Kodi system user
+  user:
+    name: '{{ kodi_sysuser }}'
+    group: '{{ kodi_sysgroup }}'
+#    groups: '{{kodi_sysgroup | join(",") | default(omit) }}'
+    append: False
+    home: '{{ kodi_sysuser_home_path }}'
+    comment: '{{ kodi_gecos }}'
+    shell: '{{ kodi_shell }}'
+    state: present
+    system: True
+#  when: is_kodiinstalled
+
+#- name: Users | Create Super User
+#  user:
+#    name: "{{ kodi_name }}"
+#    groups: kodi, audio, video
+#    shell: /sbin/nologin
+#    append: yes
+#    comment: "Kodi nologin User"
+#    state: present
+#  become: true

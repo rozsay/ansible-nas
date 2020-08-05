@@ -1,0 +1,53 @@
+<sources>
+    <programs>
+        <default pathversion="1"></default>
+{% for program in kodi_sources_programs %}
+        <source>
+            <name>{{ program['name'] }}</name>
+            <path pathversion="1">{{ program['path'] }}</path>
+            <allowsharing>{{ program['allowsharing'] }}</allowsharing>
+        </source>
+{% endfor %}
+    </programs>
+    <video>
+        <default pathversion="1"></default>
+{% for video in kodi_sources_video %}
+        <source>
+            <name>{{ video['name'] }}</name>
+            <path pathversion="1">{{ video['path'] }}</path>
+            <allowsharing>{{ video['allowsharing'] }}</allowsharing>
+        </source>
+{% endfor %}
+    </video>
+    <music>
+        <default pathversion="1"></default>
+{% for music in kodi_sources_music %}
+        <source>
+            <name>{{ music['name'] }}</name>
+            <path pathversion="1">{{ music['path'] }}</path>
+            <allowsharing>{{ music['allowsharing'] }}</allowsharing>
+        </source>
+{% endfor %}
+    </music>
+    <pictures>
+        <default pathversion="1"></default>
+{% for picture in kodi_sources_pictures %}
+        <source>
+            <name>{{ picture['name'] }}</name>
+            <path pathversion="1">{{ picture['path'] }}</path>
+            <allowsharing>{{ picture['allowsharing'] }}</allowsharing>
+        </source>
+{% endfor %}
+    </pictures>
+    <files>
+        <default pathversion="1"></default>
+{% for file in kodi_sources_files %}
+        <source>
+            <name>{{ file['name'] }}</name>
+            <path pathversion="1">{{ file['path'] }}</path>
+            <allowsharing>{{ file['allowsharing'] }}</allowsharing>
+        </source>
+{% endfor %}
+    </files>
+</sources>
+#© 2020 GitHub, Inc.

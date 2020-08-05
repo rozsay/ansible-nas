@@ -1,0 +1,21 @@
+zfsprep_installdir: /mnt/install/
+zfsprep_zap_disks: false
+zfsprep_data_pool: d
+#zfsprep_root_pool: "{{ zfsprep_hostname.long }}"
+zfsprep_efi: true #in the packerfiles, this gets overridden at the command line
+zfsprep_crypt: true
+zfsprep_hostname:
+  short: nas
+  long: nas.test.local
+zfsprep_root_disks:
+  - sda
+zfsprep_data_disks:
+zfsprep_root_pool_type: ""
+zfsprep_data_pool_type: ""
+zfsprep_legacy_device_nodes: false
+zfsprep_timezone: "Europe/Budapest"
+ansible_python_interpreter: /usr/bin/python3
+
+disk_additional_disks: []
+disk_package_use: auto
+additional_fs_utils: []

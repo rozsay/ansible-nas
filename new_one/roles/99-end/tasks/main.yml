@@ -1,0 +1,23 @@
+---
+- name: Create a snapshot of rpool/root file system.
+  zfs:
+    name: "{{ zfsprep_root_pool }}/root@{{ ansible_date_time.date }}install"
+    state: present
+ Cleanup
+- name: Unmount All Directories
+  mount:
+    name: "{{ item.name }}"
+    state: unmounted
+    fstype: none
+    src: none
+  become: True
+  with_items:
+   - '/mnt/install/dev'
+   - '/mnt/install/proc'
+   - '/mnt/install/sys'
+   - '/mnt/install/boot/efi'
+   - '/mnt/install/boot'
+   - '/mnt/install/home'
+   - '/mnt/install'
+- name: export all zpool
+  shell: zpool export -a

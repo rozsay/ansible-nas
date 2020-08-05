@@ -1,0 +1,75 @@
+---
+# List of base packages to install.
+# Suggested packages:
+# libasound2-plugins alsa-utils libbluray-bdj firmware-crystalhd libfftw3-bin libfftw3-dev alsa-base glew-utils opus-tools pulseaudio speex
+# Recommended packages:
+# kodi-visualization-spectrum libcec4 libmodplug1 libnfs8 libplist3 udisks2 libaacs0 libgl1-mesa-dri javascript-common va-driver-all | va-driver vdpau-driver-all | vdpau-driver
+kodi_base_packages:
+  - 'kodi'
+  - 'xorg'
+  - 'xserver-xorg'
+  - 'dbus-x11'
+  - 'xinit'
+  - 'xauth'
+  - 'xorg'
+  - 'xserver-xorg'
+  - 'xserver-xorg-core'
+  - 'dbus-x11'
+  - 'xinit'
+  - 'xserver-xorg-legacy'
+  - 'xserver-common'
+  - 'pulseaudio'
+  - 'alsa-utils'
+
+# System user and group
+kodi_sysuser: 'kodi'
+kodi_sysuser_home_path: '/home/kodi'
+kodi_sysgroup: 'kodi'
+# The default shell set on the Kodi account.
+kodi_shell: '/usr/sbin/nologin'
+
+# List of additional system groups of the system UNIX account.
+kodi_groups:
+  - 'cdrom'
+  - 'floppy'
+  - 'audio'
+  - 'video'
+  - 'plugdev'
+
+# Contents of the GECOS field set for the Kodi account.
+kodi_gecos: 'kodi.org'
+
+# Gui Settings
+kodi_webserver_enable: true
+kodi_webserver_username: 'kodi'
+#kodi_webserver_password: 'kodi'
+kodi_webserver_port: '8080'
+
+kodi_zeroconf_enable: false
+kodi_upnpserver_enable: true
+
+kodi_videolibrary_updateonstartup: true
+kodi_musiclibrary_updateonstartup: true
+
+kodi_audiooutput_passthroughdevice: ALSA:iec958:CARD=MID,DEV=0
+kodi_addons_unknownsource_enable: true
+
+kodi_smb_winserver: ""
+kodi_smb_workgroup: "WORKGROUP"
+
+# Mysql Settings
+kodi_usemysql: false
+
+kodi_mysql:
+  host: localhost
+  port: 3306
+  user: kodi
+  pass: password
+
+# Source settings
+kodi_sources_video: []
+kodi_sources_music: []
+kodi_sources_programs: []
+kodi_sources_files: []
+kodi_sources_pictures: []
+

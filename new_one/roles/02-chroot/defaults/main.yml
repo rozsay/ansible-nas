@@ -1,0 +1,40 @@
+---
+# defaults file for 02-chroot
+isneeded: true
+zfsprep_efi: true
+zfsprep_swap: true
+zfsprep_root_pool: rpool
+zfsprep_swap_opts:
+  volsize: 1G
+  compression: zle
+  logbias: throughput
+  sync: always
+  primarycache: metadata
+  secondarycache: none
+  com.sun:auto-snapshot: false
+zfsprep_timezone: "UTC"
+#zfsprep_grub_cmdline: "elevator=noop"
+zfsprep_grub_cmdline: "root=ZFS=rpool/root"
+zfsprep_data_disks: []
+zfsprep_root_disks_by_id: "/dev/disk/by-id/{{ (zfsprep_root_disks | map('extract', hostvars[inventory_hostname]['ansible_devices'], ['links', 'ids', 0]) | list).0 }}"
+#zfsprep_root_disks_by_id: "{{ zfsprep_root_disks | map('extract', hostvars[inventory_hostname]['ansible_devices'], ['links', 'ids', 0]) | list | map('regex_replace', '(.*)', '/dev/disk/by-id/\\g<1>') | list }}"
+zfsprep_data_disks_by_id: "{{ zfsprep_data_disks | map('extract', hostvars[inventory_hostname]['ansible_devices'], ['links', 'ids', 0]) | list | map('regex_replace', '(.*)', '/dev/disk/by-id/\\g<1>') | list }}"
+zfsprep_root_device_list: "{{ zfsprep_legacy_device_nodes | ternary((zfsprep_root_disks | map('regex_replace', '(.*)', '/dev/\\g<1>') | list), zfsprep_root_disks_by_id) }}"
+zfsprep_data_device_list: "{{ zfsprep_legacy_device_nodes | ternary((zfsprep_data_disks | map('regex_replace', '(.*)', '/dev/\\g<1>') | list), zfsprep_data_disks_by_id) }}"
+zfsprep_legacy_device_nodes: false
+#look for ways to refactor this:
+zfsprep_efi_part_append: "{{ zfsprep_legacy_device_nodes | ternary('1', '-part1') }}"
+zfsprep_boot_part_append: "{{ zfsprep_legacy_device_nodes | ternary('2', '-part2') }}"
+zfsprep_root_part_append: "{{ zfsprep_legacy_device_nodes | ternary('3', '-part3') }}"
+#zfsprep_data_part_append: "{{ zfsprep_legacy_device_nodes | ternary('1', '-part1') }}"
+zfsprep_data_partitions: false
+zfsprep_extra_locales: []
+zfsprep_locales: "{{ zfsprep_extra_locales + ['en_US.UTF-8'] }}"
+zfsprep_lang: "en_US.UTF-8"
+zfsprep_kernel_package: "linux-image-generic linux-headers-generic"
+zfsprep_root_password_hash: "$2y$10$1JdBtEi5WePZ7S7LscCvtu26xf/7uVdKywSBDhlEd92TZLun76TnK"  # "vagrant"
+
+debug:
+  msg: "zfsprep_root_disks_by_id:  {{ zfsprep_root_disks_by_id }} "
+debug:
+  msg: "zfsprep_data_device_list:  {{ zfsprep_data_device_list }} "

@@ -1,0 +1,6 @@
+---
+# vars file for netplan-networking
+nas_hosts_network_interfaces:
+  - enp0s8
+  - enp0s9
+nas_host_loopback_address: "192.168.100.10/24"

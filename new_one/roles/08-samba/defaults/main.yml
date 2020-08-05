@@ -1,0 +1,52 @@
+# roles/samba/defaults/main.yml
+---
+
+samba_workgroup: 'WORKGROUP'
+samba_server_string: 'Fileserver %m'
+samba_log_size: 5000
+samba_log_level: 0
+samba_interfaces: []
+samba_security: 'user'
+samba_passdb_backend: 'tdbsam'
+samba_map_to_guest: 'never'
+samba_load_printers: false
+samba_printer_type: 'cups'
+samba_cups_server: 'localhost:631'
+samba_load_homes: false
+samba_create_varwww_symlinks: false
+samba_shares_root: '/mnt'
+#samba_shares: []
+samba_shares:
+  - name: torrents
+    comment: 'A place for pirates to hang out'
+    path: /mnt/data2000-new/torrents/
+    group: users
+    owner: "{{ user_name }}"
+    guest_ok: 'yes'
+    browseable: 'yes'
+  - name: data1500
+    comment: 'data1500 A place for pirates to hang out'
+    path: /mnt/data1500/
+    guest_ok: 'yes'
+    browseable: 'yes'
+  - name: data2000
+    comment: 'data2000 A place for pirates to hang out'
+    path: /mnt/data2000/
+    guest_ok: 'yes'
+    browseable: 'yes'
+  - name: data3000t
+    comment: 'data3000A place for pirates to hang out'
+    path: /mnt/data3000/
+    guest_ok: 'yes'
+    browseable: 'yes'
+
+#samba_users: []
+samba_users:
+  - name: " {{ user_name }} "
+    password: " {{ user_password }} "
+samba_wins_support: 'yes'
+samba_local_master: 'yes'
+samba_domain_master: 'yes'
+samba_preferred_master: 'yes'
+samba_mitigate_cve_2017_7494: true
+

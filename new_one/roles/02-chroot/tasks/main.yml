@@ -1,0 +1,194 @@
+---
+- debug:
+    var: zfsprep_efi|default(false)|bool == true
+- name: install locales
+  locale_gen:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ zfsprep_locales }}"
+- name: set LANG in /etc/default/locale
+  lineinfile:
+    line: "LANG={{ zfsprep_lang }}"
+    path: /etc/default/locale
+    insertafter: EOF
+- name: set timezone
+  shell: "echo {{ zfsprep_timezone }} > /etc/timezone && rm /etc/localtime && dpkg-reconfigure -f noninteractive tzdata"
+- name: ln -s /proc/self/mounts /etc/mtab
+  file:
+    src: /proc/self/mounts
+    dest: /etc/mtab
+    state: link
+- name: ensure live system has necessary packages installed
+  apt:
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+    upgrade: safe
+  become: true
+  register: apt_out
+
+- debug: var=apt_out
+- debug: var={{ apt_out.stdout.split('\n')[:-1] }}
+
+- name: update apt cache
+  become: true
+  apt:
+    update_cache: yes
+    upgrade: 'yes'
+- name: install linux-image-generic
+  apt:
+    name: linux-image-generic
+    install_recommends: no
+    state: present
+- name: install linux-headers-generic
+  apt:
+    name: linux-headers-generic
+    state: present
+
+#- name: install our kernel
+#  apt:
+#    name: "{{ zfsprep_kernel_package }}"
+#    install_recommends: no
+#    state: present
+
+- name: zfs-dkms note-incompatible-licenses note true
+  shell: "zfs-dkms zfs-dkms/note-incompatible-licenses note true | debconf-set-selections"
+- name: install zfs-dkms
+  apt:
+    name: zfs-dkms
+    state: present
+- name: install zfs-initramfs
+  apt:
+    name: zfs-initramfs
+    state: present
+- name: install grub-pc
+  apt:
+    name: grub-pc
+    state: present
+  when: zfsprep_efi|default(false)|bool != true
+- apt:
+    name: dosfstools
+    state: present
+  when: zfsprep_efi|default(false)|bool == true
+- name: install grub-efi-amd64
+  apt:
+    name: grub-efi-amd64
+    state: present
+  when: zfsprep_efi|default(false)|bool == true
+- apt:
+    name: grub-efi-amd64-signed
+    state: present
+  when: zfsprep_efi|default(false)|bool == true
+- apt:
+    name: shim-signed
+    state: present
+  when: zfsprep_efi|default(false)|bool == true
+
+- name: update fstab with /boot volume
+  shell: "echo UUID=$(blkid -s UUID -o value {{ item }}) /boot ext2 noatime,nofail,x-systemd.device-timeout=1 0 1 >> /etc/fstab"
+  with_items:
+    - "{{ zfsprep_root_device_list }}{{ zfsprep_boot_part_append }}"
+#- "{{ (zfsprep_root_device_list | length > 1) | ternary('/dev/md0', (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list).0) }}"
+
+- name: update fstab with efi partitions
+  shell: "echo UUID=$(blkid -s UUID -o value {{ item }})  /boot/efi vfat nofail,x-systemd.device-timeout=1 0 1 >> /etc/fstab"
+  with_items:
+    - "{{ zfsprep_root_device_list }}{{ zfsprep_efi_part_append }}"
+  when: zfsprep_efi|default(false)|bool == true
+
+- name: install grub-efi-amd64
+  apt:
+    name: grub-efi-amd64
+    state: present
+  when: zfsprep_efi|default(false)|bool == true
+  
+- name: set root password
+  user:
+    name: root
+    password: "{{ zfsprep_root_password_hash }}"
+
+#- name: fix mount race condition
+#  shell: "zfs set mountpoint=legacy {{ item }}"
+#  with_items:
+#    - "{{ zfsprep_root_pool }}/var/log"
+#    - "{{ zfsprep_root_pool }}/var/tmp"
+#- name: update fstab
+#  lineinfile:
+#    line: "{{ zfsprep_root_pool}}{{ item }} {{ item }} zfs defaults 0 0"
+#    path: /etc/fstab
+#    insertafter: EOF
+#  with_items:
+#    - /var/log
+#    - /var/tmp
+
+- name: zfs-import-scan.service start and enabled
+  systemd:
+    name:  zfs-import-scan.service
+    state: started
+    enabled: yes
+    daemon-reload: yes
+
+- name: create swap zvol
+  zfs:
+    name: "{{ zfsprep_root_pool }}/swap "
+    state: present
+    extra_zfs_properties:
+      "{{ zfsprep_swap_opts }}"
+#    when: not swap_file_check.stat.exists
+- name: mkswap
+  shell: "mkswap -f /dev/zvol/{{ zfsprep_root_pool }}/swap && echo /dev/zvol/{{ zfsprep_root_pool }}/swap none swap defaults 0 0 >> /etc/fstab && swapon -av"
+  when: zfsprep_swap|default(false)|bool == true
+
+- lineinfile:
+    line: "RESUME=none"
+    path: /etc/initramfs-tools/conf.d/resume
+    create: yes
+    state: present
+  when: zfsprep_swap|default(false)|bool == true
+
+- shell: "update-initramfs -c -k all"
+
+- name: modify /etc/default/grub
+  replace:
+    path: /etc/default/grub
+    regexp: "{{ item.regex }}"
+    replace: "{{ item.replace }}"
+  with_items:
+    - regex: "^(GRUB_HIDDEN_TIMEOUT.*)"
+      replace: "#\\1"
+    - regex: "^GRUB_CMDLINE_LINUX_DEFAULT=.*"
+      replace: 'GRUB_CMDLINE_LINUX_DEFAULT=""'
+    - regex: "^GRUB_CMDLINE_LINUX=.*"
+      replace: 'GRUB_CMDLINE_LINUX="{{ zfsprep_grub_cmdline }}"'
+    - regex: "^#(GRUB_TERMINAL.*)"
+      replace: "\\1"
+- shell: "echo 'GRUB_DISABLE_OS_PROBER=true' >> /etc/default/grub"
+- shell: update-grub
+- shell: "grub-install {{ item }}"
+  with_items:
+    - "{{ zfsprep_root_device_list }}"
+  when: zfsprep_efi|default(false)|bool != true
+- name: install grub efi on primary disk
+  shell: "grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy"
+  when: zfsprep_efi|default(false)|bool == true
+
+#- name: write grub boot sector/setup efi on secondary disks
+#  shell: "dd if={{ zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list | first }} of={{ item.0 }} && efibootmgr -c -g -d {{ item.1 }} -p 3 -L 'ubuntu-{{ item.2 }}' -l '\\EFI\\Ubuntu\\grubx64.efi'"
+#  with_together:
+#    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>' + zfsprep_boot_part_append) | list)[1:] }}"
+#    - "{{ (zfsprep_root_device_list | map('regex_replace', '(.*)', '\\g<1>') | list)[1:] }}"
+#    - "{{ zfsprep_root_disks[1:] }}"
+#  when: (zfsprep_efi|default(false)|bool == true) and (zfsprep_root_device_list | length > 1)
+
+- name: ensure zfs.target starts on boot
+  systemd:
+    name: zfs.target
+    enabled: yes
+
+- name: Creates an entry like "@reboot /some/job.sh"
+  cron:
+    name: "a job for reboot"
+    special_time: reboot
+    job: " mount /boot ; mount /boot/efi"
+#- shell: "( crontab -l ; echo '"'@reboot mount /boot ; mount /boot/efi'"' ) | crontab -"

@@ -1,0 +1,8 @@
+---
+#- include: hostname.yml
+#- include: multiverse_repo.yml
+#- include: essentials.yml
+#- include: timezone.yml
+#- include: ssmtp.yml
+#- include: fail2ban.yml
+- include: sec_updates.yml
